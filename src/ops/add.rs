@@ -73,11 +73,7 @@ where
 	T: ToPrimitive,
 {
 	type Output = Polynomial<F>;
-	fn add(self, other: T) -> Polynomial<F>
-	{
-		let x = convert(other);
-		&self + Polynomial::<F>::from(vec![x])
-	}
+	fn add(self, other: T) -> Polynomial<F> { self + Polynomial::from(vec![convert(other)]) }
 }
 
 impl<F, T> Add<T> for &Polynomial<F>
@@ -86,11 +82,7 @@ where
 	T: ToPrimitive,
 {
 	type Output = Polynomial<F>;
-	fn add(self, other: T) -> Polynomial<F>
-	{
-		let x = convert(other);
-		self + Polynomial::<F>::from(vec![x])
-	}
+	fn add(self, other: T) -> Polynomial<F> { self + Polynomial::from(vec![convert(other)]) }
 }
 
 duplicate! {
@@ -198,23 +190,16 @@ where
 	T: ToPrimitive,
 {
 	type Output = Polynomial<F>;
-	fn sub(self, other: T) -> Polynomial<F>
-	{
-		let x: F = convert(other);
-		&self + Polynomial::<F>::from(vec![-x])
-	}
+	fn sub(self, other: T) -> Polynomial<F> { self + Polynomial::from(vec![-convert::<T, F>(other)]) }
 }
+
 impl<F, T> Sub<T> for &Polynomial<F>
 where
 	F: Float + AddAssign,
 	T: ToPrimitive,
 {
 	type Output = Polynomial<F>;
-	fn sub(self, other: T) -> Polynomial<F>
-	{
-		let x: F = convert(other);
-		self + Polynomial::<F>::from(vec![-x])
-	}
+	fn sub(self, other: T) -> Polynomial<F> { self + Polynomial::from(vec![-convert::<T, F>(other)]) }
 }
 
 duplicate! {
