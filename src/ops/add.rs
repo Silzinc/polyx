@@ -6,12 +6,14 @@ use std::{
 	ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
 
-impl Add<&Polynomial> for &Polynomial
+fn convert<T1: ToPrimitive, T2: Float>(x: T1) -> T2 { T2::from(x).unwrap() }
+
+impl<T: Float + AddAssign> Add<&Polynomial<T>> for &Polynomial<T>
 {
 	// Implements addition without taking ownership
-	type Output = Polynomial;
+	type Output = Polynomial<T>;
 
-	fn add(self, other: &Polynomial) -> Polynomial
+	fn add(self, other: &Polynomial<T>) -> Polynomial<T>
 	{
 		if other.degree() > self.degree() {
 			other.add(self)
@@ -19,36 +21,34 @@ impl Add<&Polynomial> for &Polynomial
 			match (self, other) {
 				(Zero, _) => other.clone(),
 				(_, Zero) => self.clone(),
-				(X, X) => NonZero(vec![0., 2.]),
-				(X, NonZero(other_coefs)) => {
+				(X, X) => NonZero(vec![convert(1), convert(2)]),
+				(X, NonZero(other_coefs)) =>
 					if other_coefs.len() == 0 {
 						X
 					} else if other_coefs.len() == 1 {
-						NonZero(vec![other_coefs[0], 1.])
+						NonZero(vec![other_coefs[0], convert(1)])
 					} else {
 						let mut new_coefs = other_coefs.clone();
-						new_coefs[1] += 1.;
+						new_coefs[1] += convert(1);
 						NonZero(new_coefs)
-					}
-				}
-				(NonZero(coefs), X) => {
+					},
+				(NonZero(coefs), X) =>
 					if coefs.len() == 0 {
 						X
 					} else if coefs.len() == 1 {
-						NonZero(vec![coefs[0], 1.])
+						NonZero(vec![coefs[0], convert(1)])
 					} else {
 						let mut new_coefs = coefs.clone();
-						new_coefs[1] += 1.;
+						new_coefs[1] += convert(1);
 						NonZero(new_coefs)
-					}
-				}
+					},
 				(NonZero(coefs), NonZero(other_coefs)) => {
 					let mut new_coefs = coefs.clone();
 					for k in 0..other_coefs.len() {
 						new_coefs[k] += other_coefs[k];
 					}
 					NonZero(new_coefs)
-				}
+				},
 			}
 		}
 	}
