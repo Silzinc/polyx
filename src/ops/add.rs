@@ -51,21 +51,20 @@ impl<T: Float + AddAssign> Add<&Polynomial<T>> for &Polynomial<T>
 	}
 }
 
-// The following ones work but take ownership of instances of Polynomial<float>.
-// It is recommended to always add &Polynomial<T>.
-duplicate! {
-	[
-	Added             Adder            self_reference    other_reference;
-	[&Polynomial<T>] [Polynomial<T>]  [&self]           [other];
-	[Polynomial<T>]  [&Polynomial<T>] [self]            [&other];
-	[Polynomial<T>]  [Polynomial<T>]  [&self]           [&other];
-	]
-
-	impl<T: Float + AddAssign> Add<Added> for Adder
-	{
-		type Output = Polynomial<T>;
-		fn add(self, other: Added) -> Polynomial<T> { self_reference + other_reference }
-	}
+impl<T: Float + AddAssign> Add<&Polynomial<T>> for Polynomial<T>
+{
+	type Output = Polynomial<T>;
+	fn add(self, other: &Polynomial<T>) -> Polynomial<T> { &self + other }
+}
+impl<T: Float + AddAssign> Add<Polynomial<T>> for &Polynomial<T>
+{
+	type Output = Polynomial<T>;
+	fn add(self, other: Polynomial<T>) -> Polynomial<T> { self + &other }
+}
+impl<T: Float + AddAssign> Add<Polynomial<T>> for Polynomial<T>
+{
+	type Output = Polynomial<T>;
+	fn add(self, other: Polynomial<T>) -> Polynomial<T> { &self + &other }
 }
 
 // Number adding versions
