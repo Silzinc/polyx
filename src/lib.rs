@@ -1,8 +1,12 @@
+use num_traits::{Float, ToPrimitive};
+
+pub(crate) fn convert<T1: ToPrimitive, T2: Float>(x: T1) -> T2 { T2::from(x).unwrap() }
+
 #[derive(Debug, PartialEq)]
-pub enum Polynomial
+pub enum Polynomial<T: Float>
 {
 	Zero,
-	NonZero(Vec<f64>),
+	NonZero(Vec<T>),
 	X,
 }
 

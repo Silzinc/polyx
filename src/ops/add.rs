@@ -1,9 +1,8 @@
+use crate::convert;
 use crate::Polynomial::{self, NonZero, Zero, X};
 use duplicate::duplicate;
 use num_traits::{Float, ToPrimitive};
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
-
-fn convert<T1: ToPrimitive, T2: Float>(x: T1) -> T2 { T2::from(x).unwrap() }
 
 impl<T: Float + AddAssign> Add<&Polynomial<T>> for &Polynomial<T>
 {
