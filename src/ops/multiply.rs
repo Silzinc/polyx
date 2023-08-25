@@ -1,6 +1,7 @@
-use crate::Polynomial;
-use crate::Polynomial::{NonZero, Zero, X};
-use num_traits::{Pow, PrimInt, ToPrimitive};
+use crate::convert;
+use crate::Polynomial::{self, NonZero, Zero, X};
+use duplicate::duplicate;
+use num_traits::{Float, Pow, PrimInt, ToPrimitive};
 use rustfft::{num_complex::Complex, FftPlanner};
 use std::{
 	fmt::Debug,
@@ -8,32 +9,35 @@ use std::{
 };
 
 // Base multiplication with the Schönhage-Strassen algorithm
+// There is an ugly conversion to f64 everytime to make the algorithm work
+// TODO : rewrite fft to avoid this and have a more optimized version
 
-impl Mul<&Polynomial> for &Polynomial
+impl<T: Float + ToPrimitive> Mul<&Polynomial<T>> for &Polynomial<T>
 {
-	type Output = Polynomial;
+	type Output = Polynomial<T>;
 
-	fn mul(self, other: &Polynomial) -> Polynomial
+	fn mul(self, other: &Polynomial<T>) -> Polynomial<T>
 	{
+		let zero = T::from(0).unwrap();
 		match (self, other) {
 			(Zero, _) => Zero,
 			(_, Zero) => Zero,
-			(X, X) => NonZero(vec![0f64, 0f64, 1f64]),
+			(X, X) => NonZero(vec![zero, zero, T::from(1).unwrap()]),
 			(NonZero(coefs), X) => {
-				let mut new_coefs = vec![0f64; coefs.len() + 1];
+				let mut new_coefs = vec![zero; coefs.len() + 1];
 				for k in 1..=coefs.len() {
 					new_coefs[k] = coefs[k - 1];
 				}
 				NonZero(new_coefs)
-			}
+			},
 			(X, _) => other.mul(self),
-			(NonZero(coefs), NonZero(other_coefs)) => {
+			(NonZero(coefs), NonZero(other_coefs)) =>
 				if coefs.len() == 1 {
-					let c: f64 = coefs[0];
-					Polynomial::from(Vec::from_iter(other_coefs.iter().map(|x| c * x)))
+					let c = coefs[0];
+					Polynomial::<T>::from(Vec::from_iter(other_coefs.iter().map(|&x| c * x)))
 				} else if other_coefs.len() == 1 {
-					let c: f64 = other_coefs[0];
-					Polynomial::from(Vec::from_iter(coefs.iter().map(|x| c * x)))
+					let c = other_coefs[0];
+					Polynomial::<T>::from(Vec::from_iter(coefs.iter().map(|&x| c * x)))
 				} else {
 					let n = coefs.len() + other_coefs.len() - 1;
 					let mut planner = FftPlanner::new();
@@ -43,10 +47,10 @@ impl Mul<&Polynomial> for &Polynomial
 						let mut other_buffer = vec![Complex { re: 0f64, im: 0f64 }; n];
 
 						for k in 0..coefs.len() {
-							buffer[k].re = coefs[k];
+							buffer[k].re = coefs[k].to_f64().unwrap();
 						}
 						for k in 0..other_coefs.len() {
-							other_buffer[k].re = other_coefs[k];
+							other_buffer[k].re = other_coefs[k].to_f64().unwrap();
 						}
 
 						let fft = planner.plan_fft_forward(n);
@@ -61,173 +65,116 @@ impl Mul<&Polynomial> for &Polynomial
 					let fft_inv = planner.plan_fft_inverse(n);
 					fft_inv.process(&mut buffer);
 
-					let new_coefs = Vec::from_iter(buffer.iter().map(|x| x.re / n as f64));
-					Polynomial::from(new_coefs)
-				}
-			}
+					let new_coefs: Vec<T> = buffer.iter().map(|&x| T::from(x.re / n as f64).unwrap()).collect();
+					Polynomial::<T>::from(new_coefs)
+				},
 		}
 	}
 }
 
 // Ownership taking versions
 
-impl Mul<&Polynomial> for Polynomial
+impl<T: Float> Mul<&Polynomial<T>> for Polynomial<T>
 {
-	type Output = Polynomial;
+	type Output = Polynomial<T>;
 
-	fn mul(self, other: &Polynomial) -> Polynomial { &self * other }
+	fn mul(self, other: &Polynomial<T>) -> Polynomial<T> { &self * other }
 }
-impl Mul<Polynomial> for &Polynomial
+impl<T: Float> Mul<Polynomial<T>> for &Polynomial<T>
 {
-	type Output = Polynomial;
+	type Output = Polynomial<T>;
 
-	fn mul(self, other: Polynomial) -> Polynomial { self * &other }
+	fn mul(self, other: Polynomial<T>) -> Polynomial<T> { self * &other }
 }
-impl Mul<Polynomial> for Polynomial
+impl<T: Float> Mul<Polynomial<T>> for Polynomial<T>
 {
-	type Output = Polynomial;
+	type Output = Polynomial<T>;
 
-	fn mul(self, other: Polynomial) -> Polynomial { &self * &other }
-}
-
-// MulAssign
-
-impl MulAssign<&Polynomial> for Polynomial
-{
-	fn mul_assign(&mut self, other: &Polynomial)
-	{
-		match self {
-			Zero => (),
-			X => {
-				*self = &X * other;
-			}
-			NonZero(coefs) => {
-				*self = &NonZero((*coefs).clone()) * other;
-			}
-		};
-	}
-}
-impl MulAssign<Polynomial> for Polynomial
-{
-	fn mul_assign(&mut self, other: Polynomial) { *self *= &other; }
+	fn mul(self, other: Polynomial<T>) -> Polynomial<T> { &self * &other }
 }
 
 // Multiplication by constant
 
-impl<T: ToPrimitive + Debug> Mul<T> for &Polynomial
+impl<T: ToPrimitive, F: Float> Mul<T> for &Polynomial<F>
 {
-	type Output = Polynomial;
+	type Output = Polynomial<F>;
+	fn mul(self, other: T) -> Polynomial<F> { self * Polynomial::from(vec![convert(other)]) }
+}
+impl<T: ToPrimitive, F: Float> Mul<T> for Polynomial<F>
+{
+	type Output = Polynomial<F>;
 
-	fn mul(self, other: T) -> Polynomial
-	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", other),
-		};
-		self * &Polynomial::from(vec![x])
-	}
+	fn mul(self, other: T) -> Polynomial<F> { self * Polynomial::from(vec![convert(other)]) }
 }
-impl<T: ToPrimitive + Debug> Mul<T> for Polynomial
-{
-	type Output = Polynomial;
 
-	fn mul(self, other: T) -> Polynomial
+duplicate! {
+	[primitive_type; [f64]; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
+
+	impl<T: Float> Mul<Polynomial<T>> for primitive_type
 	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", other),
-		};
-		&self * &Polynomial::from(vec![x])
+		type Output = Polynomial<T>;
+		fn mul(self, other: Polynomial<T>) -> Polynomial<T> { other * self }
+	}
+	impl<T: Float> Mul<&Polynomial<T>> for primitive_type
+	{
+		type Output = Polynomial<T>;
+		fn mul(self, other: &Polynomial<T>) -> Polynomial<T> { other * self }
 	}
 }
-impl Mul<Polynomial> for f64
+
+// MulAssign implementations
+// ====================================================================================
+
+impl<T: Float> MulAssign<&Polynomial<T>> for Polynomial<T>
 {
-	type Output = Polynomial;
-	fn mul(self, other: Polynomial) -> Polynomial { other * self }
+	fn mul_assign(&mut self, other: &Polynomial<T>) { *self = *self * other }
 }
-impl Mul<&Polynomial> for f64
+impl<T: Float> MulAssign<Polynomial<T>> for Polynomial<T>
 {
-	type Output = Polynomial;
-	fn mul(self, other: &Polynomial) -> Polynomial { other * self }
+	fn mul_assign(&mut self, other: Polynomial<T>) { *self = *self * other }
 }
-impl Mul<Polynomial> for f32
+impl<T: ToPrimitive, F: Float> MulAssign<T> for Polynomial<F>
 {
-	type Output = Polynomial;
-	fn mul(self, other: Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl Mul<&Polynomial> for f32
-{
-	type Output = Polynomial;
-	fn mul(self, other: &Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl Mul<Polynomial> for i32
-{
-	type Output = Polynomial;
-	fn mul(self, other: Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl Mul<&Polynomial> for i32
-{
-	type Output = Polynomial;
-	fn mul(self, other: &Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl Mul<Polynomial> for i64
-{
-	type Output = Polynomial;
-	fn mul(self, other: Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl Mul<&Polynomial> for i64
-{
-	type Output = Polynomial;
-	fn mul(self, other: &Polynomial) -> Polynomial { other * (self as f64) }
-}
-impl<T: ToPrimitive + Debug> MulAssign<T> for Polynomial
-{
-	fn mul_assign(&mut self, other: T)
-	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", other),
-		};
-		*self *= Polynomial::from(vec![x]);
-	}
+	fn mul_assign(&mut self, other: T) { *self *= Polynomial::from(vec![convert(other)]) }
 }
 
 // Fast tail recursive exponentiation
 
-impl<T: PrimInt + ToPrimitive + Debug> Pow<T> for &Polynomial
+fn pow_aux<F: Float>(p: &Polynomial<F>, n: usize, r: Polynomial<F>) -> Result<Polynomial<F>, String>
 {
-	type Output = Result<Polynomial, String>;
+	if n == 0 {
+		Ok(r)
+	} else if n % 2 == 0 {
+		pow_aux(&(p * p), n / 2, r)
+	} else {
+		pow_aux(&(p * p), (n - 1) / 2, p * r)
+	}
+}
 
-	fn pow(self, other: T) -> Result<Polynomial, String>
+impl<T, F> Pow<T> for &Polynomial<F>
+where
+	T: PrimInt + Debug,
+	F: Float,
+{
+	type Output = Result<Polynomial<F>, String>;
+
+	fn pow(self, other: T) -> Result<Polynomial<F>, String>
 	{
-		let n: usize = match other.to_usize() {
-			Some(x) => x,
-			None => return Err(format!("Impossible to compute a negative power for a polynomial, trying to compute ({})^({:?})", self, other)),
-		};
-		fn aux(p: &Polynomial, n: usize, r: Polynomial) -> Result<Polynomial, String>
-		{
-			if n == 0 {
-				Ok(r)
-			} else if n % 2 == 0 {
-				aux(&(p * p), n / 2, r)
-			} else {
-				aux(&(p * p), (n - 1) / 2, p * r)
-			}
-		}
+		let n = other.to_usize().ok_or(format!("Impossible to raise a non constant polynomial to power {other:?}"))?;
 		match self {
 			Zero => Ok(Zero),
 			X => {
-				let mut coefs = vec![0f64; n + 1];
-				coefs[n] = 1.;
+				let mut coefs = vec![convert(0); n + 1];
+				coefs[n] = F::from(1).unwrap();
 				Ok(NonZero(coefs))
-			}
-			_ => aux(self, n, NonZero(vec![1.])),
+			},
+			_ => pow_aux(self, n, NonZero(vec![convert(1)])),
 		}
 	}
 }
-impl<T: PrimInt + Debug> Pow<T> for Polynomial
+impl<T: PrimInt + Debug, F: Float> Pow<T> for Polynomial<F>
 {
-	type Output = Result<Polynomial, String>;
+	type Output = Result<Polynomial<F>, String>;
 
-	fn pow(self, other: T) -> Result<Polynomial, String> { (&self).pow(other) }
+	fn pow(self, other: T) -> Result<Polynomial<F>, String> { (&self).pow(other) }
 }
