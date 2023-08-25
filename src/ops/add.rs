@@ -54,14 +54,21 @@ impl<T: Float + AddAssign> Add<&Polynomial<T>> for &Polynomial<T>
 	}
 }
 
-// The following ones work but take ownership of instances of Polynomial. It is
-// recommended to always add &Polynomial.
+// The following ones work but take ownership of instances of Polynomial<float>.
+// It is recommended to always add &Polynomial<T>.
+duplicate! {
+	[
+	Added             Adder            self_reference    other_reference;
+	[&Polynomial<T>] [Polynomial<T>]  [&self]           [other];
+	[Polynomial<T>]  [&Polynomial<T>] [self]            [&other];
+	[Polynomial<T>]  [Polynomial<T>]  [&self]           [&other];
+	]
 
-impl Add<&Polynomial> for Polynomial
-{
-	type Output = Polynomial;
-	fn add(self, other: &Polynomial) -> Polynomial { &self + other }
-}
+	impl<T: Float + AddAssign> Add<Added> for Adder
+	{
+		type Output = Polynomial<T>;
+		fn add(self, other: Added) -> Polynomial<T> { self_reference + other_reference }
+	}
 impl Add<Polynomial> for Polynomial
 {
 	type Output = Polynomial;
@@ -74,122 +81,69 @@ impl Add<Polynomial> for &Polynomial
 	fn add(self, other: Polynomial) -> Polynomial { self + &other }
 }
 
+// Number adding versions
+impl<F, T> Add<T> for Polynomial<F>
+where
+	F: Float + AddAssign,
+	T: ToPrimitive,
+{
+	type Output = Polynomial<F>;
+	fn add(self, other: T) -> Polynomial<F>
+	{
+		let x = convert(other);
+		&self + Polynomial::<F>::from(vec![x])
+	}
+}
+
+impl<F, T> Add<T> for &Polynomial<F>
+where
+	F: Float + AddAssign,
+	T: ToPrimitive,
+{
+	type Output = Polynomial<F>;
+	fn add(self, other: T) -> Polynomial<F>
+	{
+		let x = convert(other);
+		self + Polynomial::<F>::from(vec![x])
+	}
+}
+
+duplicate! {
+	[primitive_type; [f64]; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
+
+	impl<T: Float + AddAssign> Add<Polynomial<T>> for primitive_type
+	{
+		type Output = Polynomial<T>;
+		fn add(self, other: Polynomial<T>) -> Polynomial<T> { other + self }
+	}
+	impl<T: Float + AddAssign> Add<&Polynomial<T>> for primitive_type
+	{
+		type Output = Polynomial<T>;
+		fn add(self, other: &Polynomial<T>) -> Polynomial<T> { other + self }
+	}
+}
+
 // AddAssign implementations
 // ====================================================================================
 
-impl AddAssign<&Polynomial> for Polynomial
+impl<T: Float + AddAssign> AddAssign<&Polynomial<T>> for Polynomial<T>
 {
-	fn add_assign(&mut self, other: &Polynomial)
-	{
-		match self {
-			Zero => {
-				self.clone_from(other);
-			}
-			X => {
-				*self = &X + other;
-			}
-			NonZero(coefs) => {
-				*self = &NonZero((&coefs).to_vec()) + other;
-			}
-		};
-	}
+	fn add_assign(&mut self, other: &Polynomial<T>) { *self = *self + other }
 }
 
 // Ownership taking version
-impl AddAssign<Polynomial> for Polynomial
+impl<T: Float + AddAssign> AddAssign<Polynomial<T>> for Polynomial<T>
 {
-	fn add_assign(&mut self, other: Polynomial) { *self += &other; }
+	fn add_assign(&mut self, other: Polynomial<T>) { *self = *self + other }
 }
 
 // Number adding versions
-impl<T: ToPrimitive + Debug> AddAssign<T> for Polynomial
+impl<F, T> AddAssign<T> for Polynomial<F>
+where
+	F: Float + AddAssign,
+	T: ToPrimitive,
 {
-	fn add_assign(&mut self, other: T)
-	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", other),
-		};
-		match self {
-			Zero => {
-				*self = NonZero(vec![x]);
-			}
-			X => {
-				*self = NonZero(vec![x, 1f64]);
-			}
-			NonZero(coefs) => {
-				coefs[0] += x;
-			}
-		};
-	}
-}
-
-// Adding floats 32 bits to polynomials
-// ========================================================================
-
-impl<T: ToPrimitive + Debug> Add<T> for Polynomial
-{
-	type Output = Polynomial;
-	fn add(self, other: T) -> Polynomial
-	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", other),
-		};
-		&self + Polynomial::from(vec![x])
-	}
-}
-impl<T: ToPrimitive + Debug> Add<T> for &Polynomial
-{
-	type Output = Polynomial;
-	fn add(self, other: T) -> Polynomial
-	{
-		let x: f64 = match other.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting  {:?} to f64", other),
-		};
-		self + Polynomial::from(vec![x])
-	}
-}
-impl Add<Polynomial> for f64
-{
-	type Output = Polynomial;
-	fn add(self, other: Polynomial) -> Polynomial { other + self }
-}
-impl Add<&Polynomial> for f64
-{
-	type Output = Polynomial;
-	fn add(self, other: &Polynomial) -> Polynomial { other + self }
-}
-impl Add<Polynomial> for f32
-{
-	type Output = Polynomial;
-	fn add(self, other: Polynomial) -> Polynomial { other + (self as f64) }
-}
-impl Add<&Polynomial> for f32
-{
-	type Output = Polynomial;
-	fn add(self, other: &Polynomial) -> Polynomial { other + (self as f64) }
-}
-impl Add<Polynomial> for i32
-{
-	type Output = Polynomial;
-	fn add(self, other: Polynomial) -> Polynomial { other + (self as f64) }
-}
-impl Add<&Polynomial> for i32
-{
-	type Output = Polynomial;
-	fn add(self, other: &Polynomial) -> Polynomial { other + (self as f64) }
-}
-impl Add<Polynomial> for i64
-{
-	type Output = Polynomial;
-	fn add(self, other: Polynomial) -> Polynomial { other + (self as f64) }
-}
-impl Add<&Polynomial> for i64
-{
-	type Output = Polynomial;
-	fn add(self, other: &Polynomial) -> Polynomial { other + (self as f64) }
+	fn add_assign(&mut self, other: T) { *self = *self + other }
 }
 
 // Negating a polynomial
