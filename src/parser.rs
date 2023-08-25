@@ -367,10 +367,3 @@ pub fn parse_string<T: Float + AddAssign + LowerExp>(s: String) -> Result<Polyno
 		Err(e) => Err(e.to_string()),
 	}
 }
-
-#[macro_export]
-macro_rules! polynomial {
-	($($e:expr)*) => {
-		parse_string(stringify!($($e)*).to_string())
-	};
-}

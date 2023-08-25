@@ -33,6 +33,14 @@ pub mod specific
 	pub mod lagrange;
 }
 
-pub mod parser;
+mod parser;
+pub use crate::parser::parse_string;
 
 mod errors;
+
+#[macro_export]
+macro_rules! polynomial {
+	($($e:expr)*) => {
+		parse_string(stringify!($($e)*).to_string())
+	};
+}
