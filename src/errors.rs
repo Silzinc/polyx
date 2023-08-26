@@ -1,4 +1,6 @@
 use crate::parser::Ops;
+use num_traits::Float;
+use std::fmt::LowerExp;
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
@@ -9,14 +11,14 @@ impl std::fmt::Display for PolynomialString
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.0) }
 }
 
-impl crate::Polynomial
+impl<T: Float + LowerExp> crate::Polynomial<T>
 {
 	pub(crate) fn as_string(&self) -> PolynomialString { PolynomialString(self.to_string()) }
 }
 
 #[derive(Debug, Clone, Error)]
 #[allow(dead_code)]
-pub(crate) enum PolynomialError
+pub(crate) enum PolynomialError<T: Float>
 {
 	#[error("tried to execute a binary operator but no binary operator was found")]
 	NoBinaryOperator,
@@ -25,7 +27,7 @@ pub(crate) enum PolynomialError
 	#[error("tried binary operator {0} on one operand {1}")]
 	BinaryOperatorOneOperand(Ops, PolynomialString),
 	#[error("impossible to compute ({0}) ^ {1:10.3e}")]
-	ImpossiblePower(PolynomialString, f64),
+	ImpossiblePower(PolynomialString, T),
 	#[error("impossible to compute power ({0}) ^ ({1})")]
 	ImpossiblePower2Polynomials(PolynomialString, PolynomialString),
 	#[error("impossible to compute division ({0}) / ({1})")]
