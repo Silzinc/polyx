@@ -1,6 +1,6 @@
-use num_traits::{Float, ToPrimitive};
+use num_traits::{Float, NumCast, ToPrimitive};
 
-pub(crate) fn convert<T1: ToPrimitive, T2: Float>(x: T1) -> T2 { T2::from(x).unwrap() }
+pub(crate) fn convert<T1: ToPrimitive, T2: NumCast>(x: T1) -> T2 { T2::from(x).unwrap() }
 
 #[derive(Debug, PartialEq)]
 pub enum Polynomial<T: Float>
