@@ -1,65 +1,54 @@
-use crate::Polynomial;
-use crate::Polynomial::{NonZero, Zero, X};
-use num_traits::{PrimInt, ToPrimitive};
-use std::fmt::Debug;
+use crate::convert;
+use crate::Polynomial::{self, NonZero, Zero, X};
+use num_traits::{Float, PrimInt, ToPrimitive};
 
-impl Polynomial
+impl<F: Float> Polynomial<F>
 {
 	// Some basic methods needed elsewhere
-
-	pub fn eval<T: ToPrimitive + Debug>(&self, _x: T) -> f64
+	pub fn eval<T: ToPrimitive>(&self, _x: T) -> F
 	{
 		// Computes self(x)
-		let x: f64 = match _x.to_f64() {
-			Some(y) => y,
-			None => panic!("Error when converting {:?} to f64", _x),
-		};
+		let x = convert(_x);
 		match self {
-			Zero => 0.,
+			Zero => convert(0),
 			X => x,
 			NonZero(coefs) => {
-				let mut result: f64 = 0.;
-				for index in 0..=self.degree() {
-					result = x * result + coefs[self.degree() - index];
+				let mut result = convert(0);
+				let deg: usize = self.degree();
+				for index in 0..=deg {
+					result = x * result + coefs[deg - index];
 				}
 				result
-			}
+			},
 		}
 	}
-
-	pub fn degree(&self) -> usize
+	pub fn degree<T: PrimInt>(&self) -> T
 	{
 		// Gives the degree of self
 		match self {
-			Zero => 0usize,
-			X => 1usize,
-			NonZero(coefs) => (coefs.len() - 1) as usize,
+			Zero => T::from(0).unwrap(),
+			X => T::from(1).unwrap(),
+			NonZero(coefs) => T::from(coefs.len() - 1).unwrap(),
 		}
 	}
-
-	pub fn coef<T: PrimInt + Debug>(&self, _n: T) -> f64
+	pub fn coef<T: PrimInt>(&self, _n: T) -> F
 	{
 		// Computes the coefficient of nth degree of self
-		let n: usize = match _n.to_usize() {
-			Some(m) => m,
-			None => panic!("Error when converting {:?} to usize", _n),
-		};
+		let n = _n.to_usize().unwrap();
 		match self {
-			Zero => 0.,
-			X => {
+			Zero => F::zero(),
+			X =>
 				if n == 1 {
-					1.
+					convert(1)
 				} else {
-					0.
-				}
-			}
-			NonZero(coefs) => {
+					convert(0)
+				},
+			NonZero(coefs) =>
 				if n >= coefs.len() {
-					0.
+					convert(0)
 				} else {
 					coefs[n]
-				}
-			}
+				},
 		}
 	}
 }
