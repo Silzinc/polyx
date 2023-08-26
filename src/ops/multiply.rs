@@ -127,11 +127,11 @@ duplicate! {
 
 impl<T: Float> MulAssign<&Polynomial<T>> for Polynomial<T>
 {
-	fn mul_assign(&mut self, other: &Polynomial<T>) { *self = *self * other }
+	fn mul_assign(&mut self, other: &Polynomial<T>) { *self = std::mem::take(self) * other }
 }
 impl<T: Float> MulAssign<Polynomial<T>> for Polynomial<T>
 {
-	fn mul_assign(&mut self, other: Polynomial<T>) { *self = *self * other }
+	fn mul_assign(&mut self, other: Polynomial<T>) { *self = std::mem::take(self) * other }
 }
 impl<T: ToPrimitive, F: Float> MulAssign<T> for Polynomial<F>
 {

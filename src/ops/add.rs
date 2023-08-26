@@ -105,13 +105,13 @@ duplicate! {
 
 impl<T: Float + AddAssign> AddAssign<&Polynomial<T>> for Polynomial<T>
 {
-	fn add_assign(&mut self, other: &Polynomial<T>) { *self = *self + other }
+	fn add_assign(&mut self, other: &Polynomial<T>) { *self = std::mem::take(self) + other }
 }
 
 // Ownership taking version
 impl<T: Float + AddAssign> AddAssign<Polynomial<T>> for Polynomial<T>
 {
-	fn add_assign(&mut self, other: Polynomial<T>) { *self = *self + other }
+	fn add_assign(&mut self, other: Polynomial<T>) { *self = std::mem::take(self) + other }
 }
 
 // Number adding versions
@@ -120,7 +120,7 @@ where
 	F: Float + AddAssign,
 	T: ToPrimitive,
 {
-	fn add_assign(&mut self, other: T) { *self = *self + other }
+	fn add_assign(&mut self, other: T) { *self = std::mem::take(self) + other }
 }
 
 // Negating a Polynomial
