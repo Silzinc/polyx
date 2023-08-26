@@ -1,58 +1,43 @@
-use crate::Polynomial;
-use crate::Polynomial::{NonZero, Zero};
-use num_traits::{Pow, ToPrimitive};
-use std::fmt::Debug;
+use crate::convert;
+use crate::Polynomial::{self, NonZero, Zero};
+use num_traits::{Float, Pow, PrimInt, ToPrimitive};
 
-fn binom<U: ToPrimitive + Debug>(_n: U, _k: U) -> u32
+fn binom<T: PrimInt, U1: PrimInt, U2: PrimInt>(_n: U1, _k: U2) -> T
 {
-	let n = match _n.to_u32() {
-		Some(y) => y,
-		None => panic!("{:?} cannot be converted to unsigned integer", _n),
-	};
-	let k = match _k.to_u32() {
-		Some(y) => y,
-		None => panic!("{:?} cannot be converted to unsigned integer", _k),
-	};
+	let n = _n.to_u32().unwrap();
+	let k = _k.to_u32().unwrap();
 	if k > n {
-		0u32
+		convert(0)
 	} else {
-		let mut b: u32 = 1;
+		let mut b: u32 = convert(1);
 		for j in 0..k {
 			b *= n - j;
 		}
 		for j in 1..=k {
 			b /= j;
 		}
-		b
+		convert(b)
 	}
 }
 
-impl Polynomial
+impl<T: Float> Polynomial<T>
 {
-	pub fn bernstein<U: ToPrimitive + Debug>(_m: U, _i: U) -> Polynomial
+	pub fn bernstein<U: ToPrimitive>(_m: U, _i: U) -> Self
 	{
-		let m = match _m.to_usize() {
-			Some(y) => y,
-			None => panic!("{:?} cannot be converted to unsigned integer", _m),
-		};
-		let i = match _i.to_usize() {
-			Some(y) => y,
-			None => panic!("{:?} cannot be converted to unsigned integer", _i),
-		};
+		let m = _m.to_usize().unwrap();
+		let i = _i.to_usize().unwrap();
 		if i > m {
 			Zero
 		} else {
-			let b = binom(m, i) as f64;
-			let v = match NonZero(vec![1., -1.]).pow(m - i) {
+			let b: T = convert(binom::<u32, _, _>(m, i));
+			let v: Vec<T> = match NonZero(vec![convert(1), convert(-1)]).pow(m - i) {
 				Ok(NonZero(coefs)) => coefs,
 				_ => unreachable!(), // Won't happen since m >= i
 			};
-
-			let mut coefs = vec![0f64; m + 1];
+			let mut coefs = vec![convert(0); m + 1];
 			for k in i..=m {
-				coefs[k] = (b * v[k - i]) as f64;
+				coefs[k] = b * v[k - i];
 			}
-
 			NonZero(coefs)
 		}
 	}
