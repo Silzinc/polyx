@@ -1,68 +1,44 @@
-use crate::Polynomial;
-use crate::Polynomial::{NonZero, Zero, X};
-use num_traits::ToPrimitive;
-use std::{clone::Clone, convert::From, fmt::Debug, marker::Copy};
+use crate::convert;
+use crate::Polynomial::{self, NonZero, Zero};
+use num_traits::{self, Float};
+use std::{convert::From, default::Default};
 
-impl<F: ToPrimitive + Copy + Debug> From<&Vec<F>> for Polynomial
+impl<T: Float> Default for Polynomial<T>
 {
-	fn from(values: &Vec<F>) -> Polynomial
+	fn default() -> Self { Zero }
+}
+
+impl<T: Float> From<&Vec<T>> for Polynomial<T>
+{
+	fn from(values: &Vec<T>) -> Self
 	{
 		// This version does not take ownership
 		if values.len() == 0 {
 			Zero
 		} else {
-			let mut coefs = vec![0f64; values.len()];
+			let mut coefs = vec![convert(0); values.len()];
 			for k in 0..values.len() {
-				coefs[k] = match values[k].to_f64() {
-					Some(x) => x,
-					None => panic!("Error when converting {:?} to f64", values[k]),
-				};
+				coefs[k] = values[k];
 			}
 			NonZero(coefs)
 		}
 	}
 }
 
-impl From<Vec<f64>> for Polynomial
+impl<T> From<Vec<T>> for Polynomial<T>
+where T: num_traits::Float + num_traits::Zero
 {
-	fn from(value: Vec<f64>) -> Polynomial
+	fn from(value: Vec<T>) -> Self
 	{
 		// This version does take ownership
 		let mut last_index = value.len();
-		while last_index > 0 && value[last_index - 1] == 0f64 {
+		while last_index > 0 && value[last_index - 1] == convert(0) {
 			last_index -= 1;
 		}
 		if last_index == 0 {
 			Zero
 		} else {
 			NonZero(value[0..last_index].to_vec())
-		}
-	}
-}
-
-impl Clone for Polynomial
-{
-	fn clone(&self) -> Self
-	{
-		match self {
-			Zero => Zero,
-			X => X,
-			NonZero(coefs) => NonZero(coefs.clone()),
-		}
-	}
-
-	fn clone_from(&mut self, source: &Self)
-	{
-		match source {
-			Zero => {
-				*self = Zero;
-			}
-			X => {
-				*self = X;
-			}
-			NonZero(coefs) => {
-				*self = NonZero(coefs.clone());
-			}
 		}
 	}
 }
