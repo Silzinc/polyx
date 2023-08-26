@@ -1,10 +1,14 @@
-use crate::Polynomial;
-use crate::Polynomial::{NonZero, Zero, X};
+use crate::convert;
+use crate::Polynomial::{self, NonZero, Zero, X};
+use num_traits::{Float, ToPrimitive};
 use std::fmt;
 
-fn pretty_float(x: f64, n: u8) -> String
+const TOL: f64 = 0.000000000000909494; // Approximately 2^(-40)
+
+fn pretty_float<T: ToPrimitive>(_x: T, n: u8) -> String
 {
 	// Gives string represeting x with n + 1 significant figures
+	let x = _x.to_f64().unwrap();
 	if x == 0. {
 		return String::from("0");
 	}
@@ -39,53 +43,11 @@ fn pretty_float(x: f64, n: u8) -> String
 	}
 }
 
-impl fmt::Display for Polynomial
-{
-	// Allows to display the polynomial in a fancy way
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
-	{
-		let tol: f64 = 0.0000000001;
-		match self {
-			Zero => write!(f, "Polynomial(-Inf)"),
-			X => write!(f, "Polynomial(1)\n    1.000e0 X^1"),
-			NonZero(coefs) => {
-				let degree = self.degree();
-				if degree == 0 {
-					write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", coefs[0]))
-				} else {
-					let mut result_str: String = format!("Polynomial({})", degree);
-					let c = coefs[degree];
-					if c > tol {
-						result_str += &format!("\n {:10.3e} X^{}", c, degree);
-					} else if c < -tol {
-						result_str += &format!("\n-{:10.3e} X^{}", -c, degree);
-					}
-					for index in 1..degree {
-						let c = coefs[degree - index];
-						if c > tol {
-							result_str += &format!("\n+{:10.3e} X^{}", c, degree - index);
-						} else if c < -tol {
-							result_str += &format!("\n-{:10.3e} X^{}", -c, degree - index);
-						}
-					}
-					let c = coefs[0];
-					if c > tol {
-						result_str += &format!("\n+{:10.3e}", c);
-					} else if c < -tol {
-						result_str += &format!("\n-{:10.3e}", -c);
-					}
-					write!(f, "{}", result_str)
-				}
-			}
-		}
-	}
-}
-
-impl Polynomial
+impl<T: Float> Polynomial<T>
 {
 	pub fn to_latex_string(&self) -> String
 	{
-		let tol: f64 = 2f64.powi(-40);
+		let tol = convert(TOL);
 		match self {
 			Zero => String::from("0"),
 			X => String::from("X"),
@@ -119,7 +81,7 @@ impl Polynomial
 				} else {
 					let mut result_str: String = String::from("");
 					let c = coefs[degree];
-					if c >= 0. {
+					if c >= T::zero() {
 						result_str += &format!("{}\\, &X^{{{}}}&", pretty_float(c, 2u8), degree);
 					} else {
 						result_str += &format!("-{}\\, &X^{{{}}}&", pretty_float(-c, 2u8), degree);
@@ -155,7 +117,49 @@ impl Polynomial
 					}
 					result_str
 				}
-			}
+			},
+		}
+	}
+}
+
+impl<T: Float + fmt::LowerExp> fmt::Display for Polynomial<T>
+{
+	// Allows to display the polynomial in a fancy way
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+	{
+		let tol = T::from(TOL).unwrap();
+		match self {
+			Zero => write!(f, "Polynomial(-Inf)"),
+			X => write!(f, "Polynomial(1)\n    1.000e0 X^1"),
+			NonZero(coefs) => {
+				let degree = self.degree();
+				if degree == 0 {
+					write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", coefs[0]))
+				} else {
+					let mut result_str: String = format!("Polynomial({})", degree);
+					let c = coefs[degree];
+					if c > tol {
+						result_str += &format!("\n {:10.3e} X^{}", c, degree);
+					} else if c < -tol {
+						result_str += &format!("\n-{:10.3e} X^{}", -c, degree);
+					}
+					for index in 1..degree {
+						let c = coefs[degree - index];
+						if c > tol {
+							result_str += &format!("\n+{:10.3e} X^{}", c, degree - index);
+						} else if c < -tol {
+							result_str += &format!("\n-{:10.3e} X^{}", -c, degree - index);
+						}
+					}
+					let c = coefs[0];
+					if c > tol {
+						result_str += &format!("\n+{:10.3e}", c);
+					} else if c < -tol {
+						result_str += &format!("\n-{:10.3e}", -c);
+					}
+					write!(f, "{}", result_str)
+				}
+			},
 		}
 	}
 }

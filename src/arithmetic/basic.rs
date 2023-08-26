@@ -14,21 +14,20 @@ impl<F: Float> Polynomial<F>
 			X => x,
 			NonZero(coefs) => {
 				let mut result = convert(0);
-				let deg: usize = self.degree();
-				for index in 0..=deg {
-					result = x * result + coefs[deg - index];
+				for index in 0..=self.degree() {
+					result = x * result + coefs[self.degree() - index];
 				}
 				result
 			},
 		}
 	}
-	pub fn degree<T: PrimInt>(&self) -> T
+	pub fn degree(&self) -> usize
 	{
 		// Gives the degree of self
 		match self {
-			Zero => T::from(0).unwrap(),
-			X => T::from(1).unwrap(),
-			NonZero(coefs) => T::from(coefs.len() - 1).unwrap(),
+			Zero => 0,
+			X => 1,
+			NonZero(coefs) => coefs.len() - 1,
 		}
 	}
 	pub fn coef<T: PrimInt>(&self, _n: T) -> F
@@ -36,7 +35,7 @@ impl<F: Float> Polynomial<F>
 		// Computes the coefficient of nth degree of self
 		let n = _n.to_usize().unwrap();
 		match self {
-			Zero => F::zero(),
+			Zero => convert(0),
 			X =>
 				if n == 1 {
 					convert(1)
