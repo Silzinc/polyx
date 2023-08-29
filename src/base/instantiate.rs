@@ -1,44 +1,42 @@
-use crate::convert;
-use crate::Polynomial::{self, NonZero, Zero};
-use num_traits::{self, Float};
+use crate::Polynomial;
+use num_traits::Zero;
 use std::{convert::From, default::Default};
 
-impl<T: Float> Default for Polynomial<T>
+impl<T> Zero for Polynomial<T>
+where T: Clone + Zero
 {
-	fn default() -> Self { Zero }
+	#[inline]
+	fn zero() -> Self { Polynomial(Vec::new()) }
+	#[inline]
+	fn is_zero(&self) -> bool { self.0.is_empty() }
 }
 
-impl<T: Float> From<&Vec<T>> for Polynomial<T>
+impl<T> Default for Polynomial<T>
 {
-	fn from(values: &Vec<T>) -> Self
-	{
-		// This version does not take ownership
-		if values.len() == 0 {
-			Zero
-		} else {
-			let mut coefs = vec![convert(0); values.len()];
-			for k in 0..values.len() {
-				coefs[k] = values[k];
-			}
-			NonZero(coefs)
-		}
-	}
+	#[inline]
+	fn default() -> Self { Polynomial(Vec::new()) }
+}
+
+impl<T> Polynomial<T>
+{
+	#[inline]
+	pub fn new() -> Self { Polynomial(Vec::new()) }
+
+	#[inline]
+	pub fn is_empty(&self) -> bool { self.0.is_empty() }
 }
 
 impl<T> From<Vec<T>> for Polynomial<T>
-where T: num_traits::Float + num_traits::Zero
+where T: Zero + Clone
 {
-	fn from(value: Vec<T>) -> Self
+	#[inline]
+	fn from(mut values: Vec<T>) -> Self
 	{
-		// This version does take ownership
-		let mut last_index = value.len();
-		while last_index > 0 && value[last_index - 1] == convert(0) {
-			last_index -= 1;
-		}
-		if last_index == 0 {
-			Zero
-		} else {
-			NonZero(value[0..last_index].to_vec())
-		}
+		let effective_len = match values.iter().rposition(|x| !x.is_zero()) {
+			Some(index) => index + 1,
+			None => 0,
+		};
+		values.truncate(effective_len);
+		Polynomial(values)
 	}
 }
