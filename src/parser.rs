@@ -3,12 +3,11 @@ use crate::{
 	errors::PolynomialError::{self, *},
 	Polynomial,
 };
-use num_traits::{Float, Pow};
+use num_traits::Float;
 use std::{
 	fmt::{self, LowerExp},
 	ops::AddAssign,
 };
-use Polynomial::{NonZero, Zero, X};
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub(crate) enum Ops
@@ -81,7 +80,7 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 			&& p2 == X
 		{
 			// This is to optimize a bit the parsing of an expression like "cX^pow"
-			let c: T = self.pols_vec.pop().unwrap().coef(0);
+			let c: T = self.pols_vec.pop().unwrap()[0];
 			let pow: T = p1.coef(0);
 			if pow == pow.round() && pow.is_sign_positive() {
 				let l: usize = convert::<T, usize>(pow) + 1;

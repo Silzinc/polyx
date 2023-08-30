@@ -1,4 +1,5 @@
 use crate::Polynomial;
+use num_traits::Zero;
 use std::fmt;
 
 const TOL: f64 = 0.000000000000909494; // Approximately 2^(-40)
@@ -41,7 +42,7 @@ fn pretty_float(x: f64, n: u8) -> String
 }
 
 impl<T> Polynomial<T>
-where T: Into<f64>
+where T: Into<f64> + Clone + Zero
 {
 	// Gives a LaTeX code to print the polynomial as long as the coefficients can be
 	// turned into f64 Only the first SIGNIF_FIGS + 1 significant figures are
@@ -126,7 +127,7 @@ where T: Into<f64>
 }
 
 impl<T> fmt::Display for Polynomial<T>
-where T: Into<f64>
+where T: Into<f64> + Clone + Zero
 {
 	// Allows to display the polynomial in a fancy way
 	/* Example:

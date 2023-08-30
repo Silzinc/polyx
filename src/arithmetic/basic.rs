@@ -4,7 +4,7 @@ use std::ops::{Add, Index, IndexMut, Mul};
 
 // Some basic implementations needed elsewhere
 
-impl<T> Index<usize> for Polynomial<T>
+impl<T: Zero + Clone> Index<usize> for Polynomial<T>
 {
 	// Gives the coefficient of the monomial of degree index
 	/* Example:
@@ -13,13 +13,20 @@ impl<T> Index<usize> for Polynomial<T>
 	*/
 	type Output = T;
 	#[inline]
-	fn index(&self, index: usize) -> &Self::Output { &(self.0)[index] }
+	fn index(&self, index: usize) -> &Self::Output
+	{
+		if index > self.degree() || self.is_zero() {
+			&T::zero()
+		} else {
+			&(self.0)[index]
+		}
+	}
 }
 
-impl<T> IndexMut<usize> for Polynomial<T>
+impl<T: Zero + Clone> IndexMut<usize> for Polynomial<T>
 {
 	#[inline]
-	fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut (self.0)[index] }
+	fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut self[index] }
 }
 
 macro_rules! impl_iter {
@@ -67,7 +74,7 @@ impl<T> Polynomial<T>
 }
 
 impl<T> Polynomial<T>
-where T: One + Zero + PartialEq
+where T: One + Zero + PartialEq + Clone
 {
 	#[inline]
 	pub fn is_x(&self) -> bool { self.degree() == 1 && self[1] == T::one() && self[0] == T::zero() }
