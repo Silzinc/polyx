@@ -40,4 +40,5 @@ mod errors;
 #[macro_export]
 macro_rules! polynomial {
   ($($x:expr),*) => (Polynomial::from(vec![$($x),*]));
+  ($($x:expr);*) => (Polynomial::from(vec![$($x);*]));
 }
