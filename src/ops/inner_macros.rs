@@ -72,7 +72,7 @@ macro_rules! impl_op_all_primitive {
 	($op:ident, $method:ident $(,$requirements:ident)*) => {
 		duplicate::duplicate! {
 			[primitive_type; [f64]; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
-		impl_op_some_primitive!($op, $method, primitive_type $(,$requirements:ident)*);
+		impl_op_some_primitive!($op, $method, primitive_type $(,$requirements)*);
 		}
 	};
 }
@@ -108,12 +108,14 @@ macro_rules! impl_assign_op {
 #[macro_export(local_inner_macros)]
 macro_rules! impl_op_all {
 	($op:ident, $assign_op:ident, $method:ident, $assign_method:ident $(,$requirements:ident)*) => {
-		impl_op_polynomial!($op, $method $(,$requirements:ident)*);
-		impl_op_all_primitive!($op, $method $(,$requirements:ident)*);
-		impl_assign_op!($op, $assign_op, $method, $assign_method $(,$requirements:ident)*);
+		impl_op_polynomial!($op, $method $(,$requirements)*);
+		impl_op_all_primitive!($op, $method $(,$requirements)*);
+		impl_assign_op!($op, $assign_op, $method, $assign_method $(,$requirements)*);
 	};
 	($op:ident, $method:ident $(,$requirements:ident)*) => {
-		impl_op_polynomial!($op, $method $(,$requirements:ident)*);
-		impl_op_all_primitive!($op, $method $(,$requirements:ident)*);
+		impl_op_polynomial!($op, $method $(,$requirements)*);
+		impl_op_all_primitive!($op, $method $(,$requirements)*);
 	};
 }
+
+pub(super) use impl_op_all;

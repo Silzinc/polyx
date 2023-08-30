@@ -1,4 +1,4 @@
-use crate::impl_op_all;
+use super::inner_macros::*;
 use crate::Polynomial;
 use num_traits::Zero;
 use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
