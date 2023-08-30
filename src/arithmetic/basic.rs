@@ -39,6 +39,12 @@ impl_iter!(Polynomial<T>, T, std::vec::IntoIter<T>, into_iter);
 impl_iter!(&'a Polynomial<T>, &'a T, std::slice::Iter<'a, T>, iter);
 impl_iter!(&'a mut Polynomial<T>, &'a mut T, std::slice::IterMut<'a, T>, iter_mut);
 
+impl<T> FromIterator<T> for Polynomial<T>
+{
+	#[inline]
+	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self { Polynomial::from(iter.into_iter().collect()) }
+}
+
 impl<T> Polynomial<T>
 {
 	// Gives the degree of self
