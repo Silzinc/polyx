@@ -17,12 +17,7 @@ pub mod arithmetic
 	pub mod basic;
 }
 
-pub mod ops
-{
-	pub mod add;
-	pub mod multiply;
-	mod multiply_algos;
-}
+pub mod ops;
 
 pub mod specific
 {
