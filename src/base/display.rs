@@ -1,5 +1,5 @@
 use crate::Polynomial;
-use num_traits::Zero;
+use num_traits::{ToPrimitive, Zero};
 use std::fmt;
 
 const TOL: f64 = 0.000000000000909494; // Approximately 2^(-40)
@@ -42,7 +42,7 @@ fn pretty_float(x: f64, n: u8) -> String
 }
 
 impl<T> Polynomial<T>
-where T: Into<f64> + Clone + Zero
+where T: ToPrimitive + Clone + Zero
 {
 	// Gives a LaTeX code to print the polynomial as long as the coefficients can be
 	// turned into f64 Only the first SIGNIF_FIGS + 1 significant figures are
@@ -59,19 +59,19 @@ where T: Into<f64> + Clone + Zero
 			return "0".to_string();
 		}
 		let mut degree = self.degree();
-		while degree > 0 && self[degree].into().abs() < TOL {
+		while degree > 0 && self[degree].to_f64().unwrap().abs() < TOL {
 			degree -= 1;
 		}
 		if degree == 0 {
-			let c: f64 = self[0].into();
+			let c: f64 = self[0].to_f64().unwrap();
 			if c.abs() > TOL {
 				format!("{}", pretty_float(c, Self::SIGNIF_FIGS))
 			} else {
 				String::from("0")
 			}
 		} else if degree == 1 {
-			let c0: f64 = self[0].into();
-			let c1: f64 = self[1].into();
+			let c0: f64 = self[0].to_f64().unwrap();
+			let c1: f64 = self[1].to_f64().unwrap();
 			if c1.abs() > TOL {
 				if c0 > TOL {
 					format!("{}\\, X + {}", pretty_float(c1, Self::SIGNIF_FIGS), pretty_float(c0, Self::SIGNIF_FIGS))
@@ -86,14 +86,14 @@ where T: Into<f64> + Clone + Zero
 			}
 		} else {
 			let mut result_str_vec = Vec::with_capacity(degree + 2);
-			let c: f64 = self[degree].into();
+			let c: f64 = self[degree].to_f64().unwrap();
 			if c >= 0. {
 				result_str_vec.push(format!("{}\\, X^{{{degree}}}", pretty_float(c, Self::SIGNIF_FIGS)));
 			} else {
 				result_str_vec.push(format!("-{}\\, X^{{{degree}}}", pretty_float(-c, Self::SIGNIF_FIGS)));
 			}
 			for index in (2..degree).rev() {
-				let c: f64 = self[index].into();
+				let c: f64 = self[index].to_f64().unwrap();
 				if index % 3 == 0 {
 					result_str_vec.push("\\\\".to_string());
 				}
@@ -103,7 +103,7 @@ where T: Into<f64> + Clone + Zero
 					result_str_vec.push(format!("-{}\\, X^{{{index}}}", pretty_float(-c, Self::SIGNIF_FIGS)));
 				}
 			}
-			let c: f64 = self[1].into();
+			let c: f64 = self[1].to_f64().unwrap();
 			if degree % 3 == 1 {
 				result_str_vec.push("\\\\".to_string());
 			}
@@ -112,7 +112,7 @@ where T: Into<f64> + Clone + Zero
 			} else if c < -TOL {
 				result_str_vec.push(format!("-{}\\, X", pretty_float(-c, Self::SIGNIF_FIGS)));
 			}
-			let c: f64 = self[0].into();
+			let c: f64 = self[0].to_f64().unwrap();
 			if degree % 3 == 0 {
 				result_str_vec.push("\\\\".to_string());
 			}
@@ -127,7 +127,7 @@ where T: Into<f64> + Clone + Zero
 }
 
 impl<T> fmt::Display for Polynomial<T>
-where T: Into<f64> + Clone + Zero
+where T: ToPrimitive + Clone + Zero
 {
 	// Allows to display the polynomial in a fancy way
 	/* Example:
@@ -141,14 +141,14 @@ where T: Into<f64> + Clone + Zero
 		}
 		let degree = self.degree();
 		if degree == 0 {
-			return write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", self[0].into()));
+			return write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", self[0].to_f64().unwrap()));
 		}
 
 		let mut result_str_vec = Vec::with_capacity(degree + 2);
 
 		result_str_vec.push(format!("Polynomial({degree})"));
 
-		let c: f64 = self[degree].into();
+		let c: f64 = self[degree].to_f64().unwrap();
 		if c > TOL {
 			result_str_vec.push(format!("{:10.3e} X^{degree}", c));
 		} else if c < -TOL {
@@ -156,7 +156,7 @@ where T: Into<f64> + Clone + Zero
 		}
 
 		for index in (1..degree).rev() {
-			let c: f64 = self[index].into();
+			let c: f64 = self[index].to_f64().unwrap();
 			if c > TOL {
 				result_str_vec.push(format!("+{:10.3e} X^{index}", c));
 			} else if c < -TOL {
@@ -164,7 +164,7 @@ where T: Into<f64> + Clone + Zero
 			}
 		}
 
-		let c: f64 = self[0].into();
+		let c: f64 = self[0].to_f64().unwrap();
 		if c > TOL {
 			result_str_vec.push(format!("+{:10.3e}", c));
 		} else if c < -TOL {
