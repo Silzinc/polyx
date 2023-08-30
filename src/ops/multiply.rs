@@ -8,7 +8,23 @@ where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero
 {
 	type Output = Polynomial<T>;
 	#[inline]
-	fn mul(self, other: &Polynomial<T>) -> Polynomial<T> { Polynomial::karatsuba(self, other) }
+	fn mul(self, other: &Polynomial<T>) -> Polynomial<T>
+	{
+		if self.is_zero() || other.is_zero() {
+			return Polynomial::zero();
+		}
+		let fact_other = other.into_iter().position(|x| !x.is_zero()).unwrap();
+		let fact_self = self.into_iter().position(|x| !x.is_zero()).unwrap();
+		let eff_other = other.into_iter().skip(fact_other).map(|&x| x.clone()).collect::<Polynomial<T>>();
+		let eff_self = self.into_iter().skip(fact_self).map(|&x| x.clone()).collect::<Polynomial<T>>();
+
+		let mut result = crate::polynomial![T::zero(); eff_self.degree() + eff_other.degree() + 1];
+		let eff_res = Polynomial::karatsuba(&eff_self, &eff_other);
+		for k in 0..=eff_res.degree() {
+			result[k + fact_self + fact_other] = eff_res[k].clone();
+		}
+		result
+	}
 }
 
 impl_op_all!(Mul, MulAssign, mul, mul_assign, Sub);
