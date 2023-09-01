@@ -12,21 +12,15 @@ impl<T: Zero + Clone> Index<usize> for Polynomial<T>
 	assert_eq!(p[0], 1);
 	*/
 	type Output = T;
+
 	#[inline]
-	fn index(&self, index: usize) -> &Self::Output
-	{
-		if index > self.degree() || self.is_zero() {
-			&T::zero()
-		} else {
-			&(self.0)[index]
-		}
-	}
+	fn index(&self, index: usize) -> &Self::Output { &(self.0)[index] }
 }
 
 impl<T: Zero + Clone> IndexMut<usize> for Polynomial<T>
 {
 	#[inline]
-	fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut self[index] }
+	fn index_mut(&mut self, index: usize) -> &mut Self::Output { &mut (self.0)[index] }
 }
 
 macro_rules! impl_iter {
@@ -34,8 +28,9 @@ macro_rules! impl_iter {
 	($t:ty, $item_spec:ty, $iter_type:ty, $method:ident) => {
 		impl<'a, T> IntoIterator for $t
 		{
-			type Item = $item_spec;
 			type IntoIter = $iter_type;
+			type Item = $item_spec;
+
 			#[inline]
 			fn into_iter(self) -> Self::IntoIter { self.0.$method() }
 		}
@@ -44,12 +39,18 @@ macro_rules! impl_iter {
 
 impl_iter!(Polynomial<T>, T, std::vec::IntoIter<T>, into_iter);
 impl_iter!(&'a Polynomial<T>, &'a T, std::slice::Iter<'a, T>, iter);
-impl_iter!(&'a mut Polynomial<T>, &'a mut T, std::slice::IterMut<'a, T>, iter_mut);
+impl_iter!(&'a mut Polynomial<T>,
+           &'a mut T,
+           std::slice::IterMut<'a, T>,
+           iter_mut);
 
-impl<T> FromIterator<T> for Polynomial<T>
+impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone
 {
 	#[inline]
-	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self { Polynomial::from(iter.into_iter().collect()) }
+	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self
+	{
+		Polynomial::from(Vec::from_iter(iter.into_iter()))
+	}
 }
 
 impl<T> Polynomial<T>
@@ -73,15 +74,13 @@ impl<T> Polynomial<T>
 	}
 }
 
-impl<T> Polynomial<T>
-where T: One + Zero + PartialEq + Clone
+impl<T> Polynomial<T> where T: One + Zero + PartialEq + Clone
 {
 	#[inline]
 	pub fn is_x(&self) -> bool { self.degree() == 1 && self[1] == T::one() && self[0] == T::zero() }
 }
 
-impl<T> Polynomial<T>
-where T: Zero + Mul<T, Output = T> + Add<T, Output = T>
+impl<T> Polynomial<T> where T: Zero + Mul<T, Output = T> + Add<T, Output = T> + Clone
 {
 	// Evaluates self(x)
 	/* Example:
@@ -95,7 +94,7 @@ where T: Zero + Mul<T, Output = T> + Add<T, Output = T>
 		let x: T = _x.into();
 		let mut result = T::zero();
 		for coef in self.into_iter().rev() {
-			result = x * result + *coef;
+			result = x.clone() * result + coef.clone();
 		}
 		result
 	}
