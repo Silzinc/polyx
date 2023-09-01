@@ -414,3 +414,10 @@ pub fn parse_string<T>(s: String) -> Result<Polynomial<T>, String>
 		Err(_e) => Err("".to_string()), // Err(e.description()),
 	}
 }
+
+#[macro_export]
+macro_rules! polynomial_expr {
+	($($e:expr)*) => {
+		parse_string(stringify!($($e)*).to_string())
+	};
+}

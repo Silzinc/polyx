@@ -2,6 +2,12 @@ use crate::Polynomial;
 use num_traits::Zero;
 use std::{convert::From, default::Default, fmt::Debug};
 
+#[macro_export]
+macro_rules! polynomial {
+  ($($x:expr),*) => (Polynomial::from(vec![$($x),*]));
+  ($($x:expr);*) => (Polynomial::from(vec![$($x);*]));
+}
+
 impl<T> Zero for Polynomial<T> where T: Clone + Zero + Debug
 {
 	#[inline]
