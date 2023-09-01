@@ -1,8 +1,5 @@
 // #![feature(specialization)] // not stable yet
-use num_traits::{NumCast, ToPrimitive};
-
-pub(crate) fn convert<T1: ToPrimitive, T2: NumCast>(x: T1) -> T2 { T2::from(x).unwrap() }
-
+#![feature(const_trait_impl)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polynomial<T>(pub(crate) Vec<T>);
 
@@ -29,16 +26,3 @@ mod parser;
 pub use crate::parser::parse_string;
 
 mod errors;
-
-// #[macro_export]
-// macro_rules! polynomial {
-// 	($($e:expr)*) => {
-// 		parse_string(stringify!($($e)*).to_string())
-// 	};
-// }
-
-#[macro_export]
-macro_rules! polynomial {
-  ($($x:expr),*) => (Polynomial::from(vec![$($x),*]));
-  ($($x:expr);*) => (Polynomial::from(vec![$($x);*]));
-}
