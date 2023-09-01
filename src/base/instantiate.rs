@@ -1,12 +1,12 @@
 use crate::Polynomial;
 use num_traits::Zero;
-use std::{convert::From, default::Default};
+use std::{convert::From, default::Default, fmt::Debug};
 
-impl<T> Zero for Polynomial<T>
-where T: Clone + Zero
+impl<T> Zero for Polynomial<T> where T: Clone + Zero + Debug
 {
 	#[inline]
 	fn zero() -> Self { Polynomial(Vec::new()) }
+
 	#[inline]
 	fn is_zero(&self) -> bool { self.0.is_empty() }
 }
@@ -26,8 +26,7 @@ impl<T> Polynomial<T>
 	pub fn is_empty(&self) -> bool { self.0.is_empty() }
 }
 
-impl<T> From<Vec<T>> for Polynomial<T>
-where T: Zero + Clone
+impl<T> From<Vec<T>> for Polynomial<T> where T: Zero + Clone
 {
 	#[inline]
 	fn from(mut values: Vec<T>) -> Self

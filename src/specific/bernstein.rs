@@ -1,5 +1,6 @@
 use crate::Polynomial;
 use num_traits::{One, Zero};
+use std::fmt::Debug;
 use std::ops::{Mul, Sub};
 
 fn binom<T: From<usize>, U1: Into<usize>, U2: Into<usize>>(_n: U1, _k: U2) -> T
@@ -21,7 +22,7 @@ fn binom<T: From<usize>, U1: Into<usize>, U2: Into<usize>>(_n: U1, _k: U2) -> T
 }
 
 impl<T> Polynomial<T>
-where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + From<usize>
+where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + From<usize> + Debug
 {
 	pub fn bernstein<U: Into<usize>>(_m: U, _i: U) -> Self
 	{
@@ -31,7 +32,12 @@ where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialE
 			Self::zero()
 		} else {
 			let b: T = binom::<usize, _, _>(m, i).into();
-			crate::polynomial![T::one(), T::zero() - T::one()].powi(m - i).into_iter().map(|x| x * b).collect::<Polynomial<T>>() * crate::polynomial![T::zero(), T::one()].powi(i)
+			crate::polynomial![T::one(), T::zero() - T::one()]
+				.powi(m - i)
+				.into_iter()
+				.map(|x| x * b.clone())
+				.collect::<Polynomial<T>>()
+				* crate::polynomial![T::zero(), T::one()].powi(i)
 		}
 	}
 }

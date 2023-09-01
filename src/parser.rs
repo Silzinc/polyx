@@ -1,12 +1,11 @@
 use crate::{
-	convert,
 	errors::PolynomialError::{self, *},
 	Polynomial,
 };
-use num_traits::Float;
+use num_traits::{FromPrimitive, One, ToPrimitive, Zero};
 use std::{
-	fmt::{self, LowerExp},
-	ops::AddAssign,
+	fmt::{self, Debug},
+	ops::{Add, Div, Mul, Neg, Sub},
 };
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -49,48 +48,67 @@ impl Ops
 	}
 }
 
-struct Parser<T: Float>
+struct Parser<T>
 {
-	pols_vec: Vec<Polynomial<T>>,
-	ops_vec: Vec<Ops>,
+	pols_vec:  Vec<Polynomial<T>>,
+	ops_vec:   Vec<Ops>,
 	reads_num: bool,
 	reads_dec: bool,
-	num: u64,
-	nb_decs: u32,
+	num:       u64,
+	nb_decs:   u32,
 	unary_min: bool,
-	is_min: bool,
+	is_min:    bool,
 	is_factor: bool,
 }
 
-impl<T: Float + AddAssign + LowerExp> Parser<T>
+impl<T> Parser<T>
+	where T: FromPrimitive
+	        + ToPrimitive
+	        + Zero
+	        + One
+	        + Mul<T, Output = T>
+	        + Add<T, Output = T>
+	        + Clone
+	        + PartialEq
+	        + Div<T, Output = T>
+	        + Sub<T, Output = T>
+	        + Neg<Output = T>
+	        + Debug
 {
 	fn execute_bin_operator(&mut self) -> Result<(), PolynomialError<T>>
 	{
+		#[allow(non_snake_case)]
+		let X = crate::polynomial![T::zero(), T::one()];
 		// println!("Got {:?} and {:?}", self.pols_vec, op);
 		let op: Ops = self.ops_vec.pop().ok_or(NoBinaryOperator)?;
 		let p1: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorZeroOperand(op))?;
-		let p2: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorOneOperand(op, p1.as_string()))?;
+		let p2: Polynomial<T> = self.pols_vec
+		                            .pop()
+		                            .ok_or(BinaryOperatorOneOperand(op, p1.as_string()))?;
 
 		if op == Ops::Mul
-			&& self.ops_vec.len() != 0
-			&& self.ops_vec[self.ops_vec.len() - 1] == Ops::Pow
-			&& self.pols_vec.len() != 0
-			&& self.pols_vec[self.pols_vec.len() - 1].degree() == 0
-			&& p1.degree() == 0
-			&& p2 == X
+		   && self.ops_vec.len() != 0
+		   && self.ops_vec[self.ops_vec.len() - 1] == Ops::Pow
+		   && self.pols_vec.len() != 0
+		   && self.pols_vec[self.pols_vec.len() - 1].degree() == 0
+		   && p1.degree() == 0
+		   && p2 == X
 		{
+			if self.pols_vec[self.pols_vec.len() - 1].is_zero() {
+				return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+			}
 			// This is to optimize a bit the parsing of an expression like "cX^pow"
-			let c: T = self.pols_vec.pop().unwrap()[0];
-			let pow: T = p1.coef(0);
-			if pow == pow.round() && pow.is_sign_positive() {
-				let l: usize = convert::<T, usize>(pow) + 1;
-				let mut coefs: Vec<T> = vec![convert(0); l];
-				coefs[l - 1] = c;
+			let c: T = self.pols_vec.pop().unwrap()[0].clone();
+			let pow: f64 = p1[0].to_f64().unwrap();
+			if pow == pow.round() && pow >= 0. {
+				let l: usize = pow as usize + 1;
+				let mut p = crate::polynomial![T::zero(); l];
+				p[l - 1] = c;
 				self.ops_vec.pop();
-				self.pols_vec.push(Polynomial::from(coefs));
+				self.pols_vec.push(p);
 				Ok(())
 			} else {
-				Err(ImpossiblePower(p2.as_string(), convert(c)))
+				Err(ImpossiblePower(p2.as_string(), c))
 			}
 		} else {
 			match op {
@@ -99,24 +117,26 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 				Ops::Mul => self.pols_vec.push(p2 * p1),
 				Ops::Div =>
 					if p1.degree() == 0 {
-						let c: T = convert::<i32, T>(1) / p1.coef(0);
-						self.pols_vec.push(p2 * c)
+						let c: T = T::one() / p1[0].clone();
+						self.pols_vec.push(crate::polynomial![c] * p2)
 					} else {
 						return Err(ImpossibleDivision(p2.as_string(), p1.as_string()));
 					},
 				Ops::Pow =>
 					if p1.degree() == 0 {
-						let c: T = p1.coef(0);
+						let c: f64 = p1[0].to_f64().unwrap();
 						if p2.degree() == 0 {
-							self.pols_vec.push(Polynomial::from(vec![p2.coef(0).powf(c) as T]))
+							let c2: f64 = p2[0].to_f64().unwrap();
+							self.pols_vec
+							    .push(crate::polynomial![T::from_f64(c2.powf(c)).unwrap()])
 						} else if c == c.round() {
 							if c.is_sign_negative() {
-								return Err(ImpossiblePower(p2.as_string(), c));
+								return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
 							}
-							let r: Polynomial<T> = p2.pow(convert::<_, i64>(c)).unwrap();
+							let r: Polynomial<T> = p2.powi(c.to_usize().unwrap());
 							self.pols_vec.push(r)
 						} else {
-							return Err(ImpossiblePower(p2.as_string(), c));
+							return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
 						}
 					} else {
 						return Err(ImpossiblePower2Polynomials(p2.as_string(), p1.as_string()));
@@ -135,12 +155,16 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 				self.push_bin_operator(Ops::Mul)?;
 			}
 			if self.num == 0 {
-				self.pols_vec.push(Zero);
+				self.pols_vec.push(Polynomial::zero());
 			} else {
 				if self.is_min {
-					self.pols_vec.push(NonZero(vec![convert(-(self.num as f64) / 10f64.powi(self.nb_decs as i32))]));
+					self.pols_vec.push(crate::polynomial![T::from_f64(
+						-(self.num as f64) / 10f64.powi(self.nb_decs as i32)
+					).unwrap()]);
 				} else {
-					self.pols_vec.push(NonZero(vec![convert(self.num as f64 / 10f64.powi(self.nb_decs as i32))]));
+					self.pols_vec.push(crate::polynomial![T::from_f64(
+						self.num as f64 / 10f64.powi(self.nb_decs as i32)
+					).unwrap()]);
 				}
 			}
 			self.num = 0;
@@ -181,6 +205,8 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 
 	fn read_char(&mut self, c: char) -> Result<(), PolynomialError<T>>
 	{
+		#[allow(non_snake_case)]
+		let X = crate::polynomial![T::zero(), T::one()];
 		match c {
 			' ' => self.push_num()?,
 			'+' => {
@@ -229,7 +255,7 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 					// In that case we have an expression like -X, which should only be seen at the
 					// beginning of an expression
 					self.is_min = false;
-					self.pols_vec.push(NonZero(vec![convert(-1)]));
+					self.pols_vec.push(crate::polynomial![T::zero() - T::one()]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.pols_vec.push(X);
@@ -243,7 +269,7 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 				if self.is_min {
 					// The idea is to turning any (...) into ((...)) and -(...) into (-1 * (...))
 					self.is_min = false;
-					self.pols_vec.push(NonZero(vec![convert(-1)]));
+					self.pols_vec.push(crate::polynomial![T::zero() - T::one()]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.ops_vec.push(Ops::Open);
@@ -335,19 +361,29 @@ impl<T: Float + AddAssign + LowerExp> Parser<T>
 	}
 }
 
-fn _parse_string<T: Float + AddAssign + LowerExp>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
+fn _parse_string<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
+	where T: FromPrimitive
+	        + ToPrimitive
+	        + Zero
+	        + One
+	        + Mul<T, Output = T>
+	        + Add<T, Output = T>
+	        + Clone
+	        + PartialEq
+	        + Div<T, Output = T>
+	        + Sub<T, Output = T>
+	        + Neg<Output = T>
+	        + Debug
 {
-	let mut parser = Parser::<T> {
-		pols_vec: Vec::new(),
-		ops_vec: Vec::new(),
-		reads_num: false,
-		reads_dec: false,
-		num: 0u64,
-		nb_decs: 0u32,
-		unary_min: true,
-		is_min: false,
-		is_factor: false,
-	};
+	let mut parser = Parser::<T> { pols_vec:  Vec::new(),
+	                               ops_vec:   Vec::new(),
+	                               reads_num: false,
+	                               reads_dec: false,
+	                               num:       0u64,
+	                               nb_decs:   0u32,
+	                               unary_min: true,
+	                               is_min:    false,
+	                               is_factor: false, };
 	let s_chars: Vec<char> = s.chars().collect();
 	for c in s_chars {
 		parser.read_char(c)?;
@@ -359,10 +395,22 @@ fn _parse_string<T: Float + AddAssign + LowerExp>(s: String) -> Result<Polynomia
 	parser.pols_vec.pop().ok_or(EmptyStringInput)
 }
 
-pub fn parse_string<T: Float + AddAssign + LowerExp>(s: String) -> Result<Polynomial<T>, String>
+pub fn parse_string<T>(s: String) -> Result<Polynomial<T>, String>
+	where T: FromPrimitive
+	        + ToPrimitive
+	        + Zero
+	        + One
+	        + Mul<T, Output = T>
+	        + Add<T, Output = T>
+	        + Clone
+	        + PartialEq
+	        + Div<T, Output = T>
+	        + Sub<T, Output = T>
+	        + Neg<Output = T>
+	        + Debug
 {
 	match _parse_string(s) {
 		Ok(p) => Ok(p),
-		Err(e) => Err(e.to_string()),
+		Err(_e) => Err("".to_string()), // Err(e.description()),
 	}
 }

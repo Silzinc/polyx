@@ -1,6 +1,5 @@
 use crate::parser::Ops;
-use num_traits::Float;
-use std::fmt::LowerExp;
+use num_traits::{ToPrimitive, Zero};
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
@@ -11,14 +10,14 @@ impl std::fmt::Display for PolynomialString
 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.0) }
 }
 
-impl<T: Float + LowerExp> crate::Polynomial<T>
+impl<T> crate::Polynomial<T> where T: ToPrimitive + Clone + Zero
 {
 	pub(crate) fn as_string(&self) -> PolynomialString { PolynomialString(self.to_string()) }
 }
 
 #[derive(Debug, Clone, Error)]
 #[allow(dead_code)]
-pub(crate) enum PolynomialError<T: Float>
+pub(crate) enum PolynomialError<T>
 {
 	#[error("tried to execute a binary operator but no binary operator was found")]
 	NoBinaryOperator,

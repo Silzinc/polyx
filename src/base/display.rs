@@ -41,8 +41,7 @@ fn pretty_float(x: f64, n: u8) -> String
 	}
 }
 
-impl<T> Polynomial<T>
-where T: ToPrimitive + Clone + Zero
+impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 {
 	// Gives a LaTeX code to print the polynomial as long as the coefficients can be
 	// turned into f64 Only the first SIGNIF_FIGS + 1 significant figures are
@@ -53,6 +52,7 @@ where T: ToPrimitive + Clone + Zero
 	println!("{}", p.to_latex_string());
 	*/
 	const SIGNIF_FIGS: u8 = 2;
+
 	pub fn to_latex_string(&self) -> String
 	{
 		if self.is_empty() {
@@ -74,9 +74,17 @@ where T: ToPrimitive + Clone + Zero
 			let c1: f64 = self[1].to_f64().unwrap();
 			if c1.abs() > TOL {
 				if c0 > TOL {
-					format!("{}\\, X + {}", pretty_float(c1, Self::SIGNIF_FIGS), pretty_float(c0, Self::SIGNIF_FIGS))
+					format!(
+					        "{}\\, X + {}",
+					        pretty_float(c1, Self::SIGNIF_FIGS),
+					        pretty_float(c0, Self::SIGNIF_FIGS)
+					)
 				} else if c0 < -TOL {
-					format!("{}\\, X - {}", pretty_float(c1, Self::SIGNIF_FIGS), pretty_float(-c0, Self::SIGNIF_FIGS))
+					format!(
+					        "{}\\, X - {}",
+					        pretty_float(c1, Self::SIGNIF_FIGS),
+					        pretty_float(-c0, Self::SIGNIF_FIGS)
+					)
 				} else {
 					format!("{}\\, X", pretty_float(c1, Self::SIGNIF_FIGS))
 				}
@@ -126,8 +134,7 @@ where T: ToPrimitive + Clone + Zero
 	}
 }
 
-impl<T> fmt::Display for Polynomial<T>
-where T: ToPrimitive + Clone + Zero
+impl<T> fmt::Display for Polynomial<T> where T: ToPrimitive + Clone + Zero
 {
 	// Allows to display the polynomial in a fancy way
 	/* Example:
@@ -141,7 +148,11 @@ where T: ToPrimitive + Clone + Zero
 		}
 		let degree = self.degree();
 		if degree == 0 {
-			return write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", self[0].to_f64().unwrap()));
+			return write!(
+			              f,
+			              "{}",
+			              format!("Polynomial(0)\n {:10.3e}", self[0].to_f64().unwrap())
+			);
 		}
 
 		let mut result_str_vec = Vec::with_capacity(degree + 2);
@@ -150,7 +161,7 @@ where T: ToPrimitive + Clone + Zero
 
 		let c: f64 = self[degree].to_f64().unwrap();
 		if c > TOL {
-			result_str_vec.push(format!("{:10.3e} X^{degree}", c));
+			result_str_vec.push(format!(" {:10.3e} X^{degree}", c));
 		} else if c < -TOL {
 			result_str_vec.push(format!("-{:10.3e} X^{degree}", -c));
 		}
