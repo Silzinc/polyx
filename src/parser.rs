@@ -361,7 +361,7 @@ impl<T> Parser<T>
 	}
 }
 
-fn _parse_string<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
+fn parse_string_checked<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
 	where T: FromPrimitive
 	        + ToPrimitive
 	        + Zero
@@ -395,7 +395,7 @@ fn _parse_string<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
 	parser.pols_vec.pop().ok_or(EmptyStringInput)
 }
 
-pub fn parse_string<T>(s: String) -> Result<Polynomial<T>, String>
+pub fn parse_string<T>(s: String) -> Polynomial<T>
 	where T: FromPrimitive
 	        + ToPrimitive
 	        + Zero
@@ -409,9 +409,9 @@ pub fn parse_string<T>(s: String) -> Result<Polynomial<T>, String>
 	        + Neg<Output = T>
 	        + Debug
 {
-	match _parse_string(s) {
-		Ok(p) => Ok(p),
-		Err(_e) => Err("".to_string()), // Err(e.description()),
+	match parse_string_checked(s) {
+		Ok(p) => p,
+		Err(e) => panic!("{e}"),
 	}
 }
 

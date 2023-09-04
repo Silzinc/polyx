@@ -1,6 +1,6 @@
 use crate::parser::Ops;
 use num_traits::{ToPrimitive, Zero};
-use thiserror::Error;
+use std::fmt;
 
 #[derive(Debug, Clone)]
 pub(crate) struct PolynomialString(pub(crate) String);
@@ -15,30 +15,44 @@ impl<T> crate::Polynomial<T> where T: ToPrimitive + Clone + Zero
 	pub(crate) fn as_string(&self) -> PolynomialString { PolynomialString(self.to_string()) }
 }
 
-#[derive(Debug, Clone, Error)]
-#[allow(dead_code)]
+#[derive(Debug, Clone)]
 pub(crate) enum PolynomialError<T>
 {
-	#[error("tried to execute a binary operator but no binary operator was found")]
 	NoBinaryOperator,
-	#[error("tried binary operator {0} on zero operand")]
 	BinaryOperatorZeroOperand(Ops),
-	#[error("tried binary operator {0} on one operand {1}")]
 	BinaryOperatorOneOperand(Ops, PolynomialString),
-	#[error("impossible to compute ({0}) ^ {1:10.3e}")]
 	ImpossiblePower(PolynomialString, T),
-	#[error("impossible to compute power ({0}) ^ ({1})")]
 	ImpossiblePower2Polynomials(PolynomialString, PolynomialString),
-	#[error("impossible to compute division ({0}) / ({1})")]
 	ImpossibleDivision(PolynomialString, PolynomialString),
-	#[error("impossible operator '(' between polynomials")]
 	ImpossibleOpen,
-	#[error("closed parenthesis without opening one previously")]
 	ImpossibleClose,
-	#[error("cannot put a unary minus sign before operator {0}")]
 	UnaryMinusFailed(Ops),
-	#[error("unsupported character '{0}'")]
 	UnsupportedCharacter(char),
-	#[error("empty string input in the parser")]
 	EmptyStringInput,
 }
+
+impl<T: fmt::Debug> fmt::Display for PolynomialError<T>
+{
+	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
+	{
+		match self {
+			PolynomialError::NoBinaryOperator => write!(f, "NoBinaryOperator"),
+			PolynomialError::BinaryOperatorZeroOperand(op) =>
+				write!(f, "BinaryOperatorZeroOperand({})", op),
+			PolynomialError::BinaryOperatorOneOperand(op, p) =>
+				write!(f, "BinaryOperatorOneOperand({}, {})", op, p),
+			PolynomialError::ImpossiblePower(p, n) => write!(f, "ImpossiblePower({}, {:?})", p, n),
+			PolynomialError::ImpossiblePower2Polynomials(p1, p2) =>
+				write!(f, "ImpossiblePower2Polynomials({}, {})", p1, p2),
+			PolynomialError::ImpossibleDivision(p1, p2) =>
+				write!(f, "ImpossibleDivision({}, {})", p1, p2),
+			PolynomialError::ImpossibleOpen => write!(f, "ImpossibleOpen"),
+			PolynomialError::ImpossibleClose => write!(f, "ImpossibleClose"),
+			PolynomialError::UnaryMinusFailed(op) => write!(f, "UnaryMinusFailed({})", op),
+			PolynomialError::UnsupportedCharacter(c) => write!(f, "UnsupportedCharacter({})", c),
+			PolynomialError::EmptyStringInput => write!(f, "EmptyStringInput"),
+		}
+	}
+}
+
+impl<T: fmt::Debug> std::error::Error for PolynomialError<T> {}
