@@ -361,7 +361,7 @@ impl<T> Parser<T>
 	}
 }
 
-fn parse_string_checked<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T>>
+impl<T> Polynomial<T>
 	where T: FromPrimitive
 	        + ToPrimitive
 	        + Zero
@@ -375,49 +375,40 @@ fn parse_string_checked<T>(s: String) -> Result<Polynomial<T>, PolynomialError<T
 	        + Neg<Output = T>
 	        + Debug
 {
-	let mut parser = Parser::<T> { pols_vec:  Vec::new(),
-	                               ops_vec:   Vec::new(),
-	                               reads_num: false,
-	                               reads_dec: false,
-	                               num:       0u64,
-	                               nb_decs:   0u32,
-	                               unary_min: true,
-	                               is_min:    false,
-	                               is_factor: false, };
-	let s_chars: Vec<char> = s.chars().collect();
-	for c in s_chars {
-		parser.read_char(c)?;
+	fn parse_string_checked(s: String) -> Result<Self, PolynomialError<T>>
+	{
+		let mut parser = Parser::<T> { pols_vec:  Vec::new(),
+		                               ops_vec:   Vec::new(),
+		                               reads_num: false,
+		                               reads_dec: false,
+		                               num:       0u64,
+		                               nb_decs:   0u32,
+		                               unary_min: true,
+		                               is_min:    false,
+		                               is_factor: false, };
+		let s_chars: Vec<char> = s.chars().collect();
+		for c in s_chars {
+			parser.read_char(c)?;
+		}
+		parser.push_num()?;
+		while parser.ops_vec.len() != 0 {
+			parser.execute_bin_operator()?;
+		}
+		parser.pols_vec.pop().ok_or(EmptyStringInput)
 	}
-	parser.push_num()?;
-	while parser.ops_vec.len() != 0 {
-		parser.execute_bin_operator()?;
-	}
-	parser.pols_vec.pop().ok_or(EmptyStringInput)
-}
 
-pub fn parse_string<T>(s: String) -> Polynomial<T>
-	where T: FromPrimitive
-	        + ToPrimitive
-	        + Zero
-	        + One
-	        + Mul<T, Output = T>
-	        + Add<T, Output = T>
-	        + Clone
-	        + PartialEq
-	        + Div<T, Output = T>
-	        + Sub<T, Output = T>
-	        + Neg<Output = T>
-	        + Debug
-{
-	match parse_string_checked(s) {
-		Ok(p) => p,
-		Err(e) => panic!("{e}"),
+	pub fn parse_string(s: String) -> Self
+	{
+		match Self::parse_string_checked(s) {
+			Ok(p) => p,
+			Err(e) => panic!("{e}"),
+		}
 	}
 }
 
 #[macro_export]
 macro_rules! polynomial_expr {
 	($($e:expr)*) => {
-		parse_string(stringify!($($e)*).to_string())
+		Polynomial::parse_string(stringify!($($e)*).to_string())
 	};
 }
