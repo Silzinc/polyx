@@ -12,6 +12,9 @@ impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
 	#[inline]
 	fn mul(self, other: &Polynomial<T>) -> Polynomial<T>
 	{
+		if self.is_zero() || other.is_zero() {
+			return Polynomial::zero();
+		}
 		let fact_other = other.into_iter().position(|x| !x.is_zero()).unwrap();
 		let fact_self = self.into_iter().position(|x| !x.is_zero()).unwrap();
 		let eff_other = other.into_iter()
