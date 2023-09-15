@@ -69,8 +69,7 @@ impl<T> Neg for Polynomial<T> where T: Neg<Output = T> + Clone + Zero
 // Subtraction
 // =================================================================================================
 
-impl<T> Sub<&Polynomial<T>> for &Polynomial<T>
-	where T: Sub<T, Output = T> + Clone + Neg<Output = T> + Zero
+impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<T, Output = T> + Clone + Zero
 {
 	// Implements subtraction without taking ownership
 	/* Example:
@@ -86,11 +85,12 @@ impl<T> Sub<&Polynomial<T>> for &Polynomial<T>
 		if other.0.len() == 0 {
 			return self.clone();
 		}
-		if self.0.len() == 0 {
-			return -other;
-		}
-		if other.degree() > self.degree() {
-			return -(other.sub(self));
+		if other.degree() > self.degree() || self.0.len() == 0 {
+			let mut minus_result = other.sub(self);
+			for k in 0..minus_result.0.len() {
+				minus_result[k] = T::zero() - minus_result[k].clone();
+			}
+			return minus_result;
 		}
 		let mut diff = self.0.clone();
 		for k in 0..=other.degree() {
@@ -101,4 +101,4 @@ impl<T> Sub<&Polynomial<T>> for &Polynomial<T>
 }
 
 // False error by rust-analyzer
-impl_op_all!(Sub, SubAssign, sub, sub_assign, Neg);
+impl_op_all!(Sub, SubAssign, sub, sub_assign);
