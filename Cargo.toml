@@ -1,5 +1,5 @@
 [package]
-name = "polynomial"
+name = "polyx"
 version = "0.1.0"
 edition = "2021"
 

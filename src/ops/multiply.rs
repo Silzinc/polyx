@@ -27,7 +27,7 @@ impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
 		                   .collect::<Polynomial<T>>();
 
 		let mut result = vec![T::zero(); self.degree() + other.degree() + 1];
-		let eff_res = Polynomial::karatsuba(&eff_self, &eff_other);
+		let eff_res = Polynomial::karatsuba(&eff_self, &eff_other, result.len());
 		for k in 0..=eff_res.degree() {
 			result[k + fact_self + fact_other] = eff_res[k].clone();
 		}

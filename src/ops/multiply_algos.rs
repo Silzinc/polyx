@@ -68,23 +68,25 @@ impl<T> Polynomial<T>
 	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
 	*/
 	#[inline]
-	pub fn convolve(p1: &Self, p2: &Self) -> Self
+	pub fn convolve(p1: &Self, p2: &Self, truncate: usize) -> Self
 	{
 		if p1.is_empty() || p2.is_empty() {
 			return Self::zero();
 		}
 		if p1.degree() < p2.degree() {
-			return Self::convolve(p2, p1);
+			return Self::convolve(p2, p1, truncate);
 		}
-		let mut result = vec![T::zero(); p1.degree() + p2.degree() + 1];
+		let mut result = vec![T::zero(); std::cmp::min(p1.degree() + p2.degree() + 1, truncate + 1)];
 		for k in 0..=p2.degree() {
-			for j in 0..=p1.degree() {
+			for j in 0..=std::cmp::min(p1.degree(), truncate - k) {
 				result[j + k] = result[j + k].clone() + p1[j].clone() * p2[k].clone();
 			}
 		}
 		Self::from(result)
 	}
 }
+
+use std::cmp::min;
 
 impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
 {
@@ -98,44 +100,52 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
 	*/
 	#[inline]
-	pub fn karatsuba(p1: &Self, p2: &Self) -> Self
+	pub fn karatsuba(p1: &Self, p2: &Self, truncate: usize) -> Self
 	{
 		if p1.degree() < p2.degree() {
-			return Self::karatsuba(p2, p1);
+			return Self::karatsuba(p2, p1, truncate);
 		}
-		if p2.degree() < 4 {
-			return Self::convolve(p1, p2);
+		if p2.degree() < 6 {
+			return Self::convolve(p1, p2, truncate);
 		}
 		let binding1 = p1.0.clone();
-		let p1_slice = binding1.as_slice();
+		let p1_slice = &binding1[0..min(truncate, p1.degree() + 1)];
 
-		let mut binding2 = vec![T::zero(); p1.degree() + 1];
-		binding2[0..(p2.degree() + 1)].clone_from_slice(&p2.0);
+		let mut binding2 = vec![T::zero(); min(p1.degree() + 1, truncate)];
+		binding2[0..min(p1.degree() + 1, truncate)].clone_from_slice(
+		                                                             &p2.0[0..min(
+			truncate,
+			p2.degree() + 1,
+		)],
+		);
 		let p2_slice = binding2.as_slice();
 
-		let mut binding_result = vec![T::zero(); (p1.degree() << 1) + 1];
+		let mut binding_result = vec![T::zero(); min((p1.degree() << 1) + 1, truncate)];
 		let result = binding_result.as_mut_slice();
 
 		let mut binding_buffer = vec![T::zero(); p1.degree() + ((p1.degree() + 1) & 1)];
 		let buffer = binding_buffer.as_mut_slice();
 
-		Self::karatsuba_inplace(p1_slice, p2_slice, result, buffer);
+		Self::karatsuba_inplace(p1_slice, p2_slice, result, buffer, truncate);
 		Self::from(binding_result)
 	}
 
 	// The following function takes two polynomials p1 and p2 and puts their product
 	// in buffer (which is assumed to be large enough to hold the result)
 	#[inline]
-	fn karatsuba_inplace(p1: &[T], p2: &[T], result: &mut [T], buffer: &mut [T])
+	fn karatsuba_inplace(p1: &[T], p2: &[T], result: &mut [T], buffer: &mut [T], truncate: usize)
 	{
+		if p1.len() > truncate || p2.len() > truncate {
+			Self::karatsuba_inplace(&p1[0..truncate], &p2[0..truncate], result, buffer, truncate)
+		}
 		result.fill_with(|| T::zero());
 
 		if p1.len() < p2.len() {
-			return Self::karatsuba_inplace(p2, p1, result, buffer);
+			return Self::karatsuba_inplace(p2, p1, result, buffer, truncate);
 		}
 		if p2.len() < 6 {
 			for k in 0..p2.len() {
-				for j in 0..p1.len() {
+				for j in 0..min(p1.len(), truncate - k) {
 					result[j + k] = result[j + k].clone() + p1[j].clone() * p2[k].clone();
 				}
 			}
@@ -159,7 +169,7 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		for k in 0..p {
 			result[k + q] = p2[k + p].clone() - p2[k].clone();
 		}
-		if odd {
+		if odd && n < truncate {
 			result[n] = p2[n - 1].clone();
 		}
 
@@ -172,14 +182,24 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		                        middle_result,
 		                        &mut buffer[0..((q << 1) - 1)],
 		                        upper_result,
+		                        min(truncate, (q << 1) - 1),
 		);
 
 		/* Step 4 */
 		let (_, upper_result) = temp.split_at_mut((p << 1) - q);
-		Self::karatsuba_inplace(&p1[p..n], &p2[p..n], upper_result, lower_result);
+		Self::karatsuba_inplace(
+		                        &p1[p..n],
+		                        &p2[p..n],
+		                        upper_result,
+		                        lower_result,
+		                        min(truncate, upper_result.len()),
+		);
 
 		/* Step 5 */
 		for k in 0..((q << 1) - 1) {
+			if k + (p << 1) == truncate {
+				break;
+			}
 			buffer[k] = buffer[k].clone() + result[k + (p << 1)].clone();
 		}
 
@@ -188,6 +208,9 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 
 		/* Step 7 */
 		for k in p..((q << 1) - 1) {
+			if k + p == truncate {
+				break;
+			}
 			result[k + p] = result[k + p].clone() + buffer[k].clone();
 		}
 
@@ -197,6 +220,7 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		                        &p2[0..p],
 		                        &mut buffer[0..((p << 1) - 1)],
 		                        &mut result[0..p],
+		                        min(truncate, (p << 1) + 1),
 		);
 
 		/* Step 9 */
