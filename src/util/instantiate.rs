@@ -1,6 +1,6 @@
 use crate::Polynomial;
-use num_traits::Zero;
-use std::{convert::From, default::Default, fmt::Debug};
+use num_traits::{One, Zero};
+use std::{convert::From, default::Default, fmt::Debug, ops::Sub};
 
 #[macro_export]
 macro_rules! polynomial {
@@ -15,6 +15,12 @@ impl<T> Zero for Polynomial<T> where T: Clone + Zero + Debug
 
 	#[inline]
 	fn is_zero(&self) -> bool { self.0.is_empty() }
+}
+
+impl<T> One for Polynomial<T> where T: Clone + Zero + Debug + One + Sub<Output = T>
+{
+	#[inline]
+	fn one() -> Self { Polynomial(vec![T::one()]) }
 }
 
 impl<T> Default for Polynomial<T>

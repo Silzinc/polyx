@@ -53,7 +53,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "polynomial"
+name = "polyx"
 version = "0.1.0"
 dependencies = [
  "duplicate",
