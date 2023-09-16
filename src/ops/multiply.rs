@@ -58,6 +58,7 @@ impl<T> Polynomial<T>
 impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
 {
 	#[inline]
+	// Returns p1 * p2 modulo modulus
 	pub fn short_product(p1: &Self, p2: &Self, modulus: usize) -> Self
 	{
 		Self::karatsuba(p1, p2, modulus)
