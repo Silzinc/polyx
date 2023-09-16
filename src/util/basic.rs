@@ -94,4 +94,6 @@ impl<T> Polynomial<T> where T: Zero + Mul<T, Output = T> + Add<T, Output = T> + 
 impl<T: Clone + Zero> Polynomial<T>
 {
 	pub fn rev(&self) -> Polynomial<T> { self.0.iter().map(|x| x.clone()).rev().collect() }
+
+	pub fn rev_inplace(&mut self) { self.0.reverse() }
 }
