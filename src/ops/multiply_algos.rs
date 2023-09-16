@@ -86,7 +86,7 @@ impl<T> Polynomial<T>
 	}
 }
 
-use std::cmp::min;
+use std::cmp::{max, min};
 
 impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
 {
@@ -106,28 +106,37 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		if truncate == 0 || p1.is_zero() || p2.is_zero() {
 			return Self::zero();
 		}
-		if p1.degree() < p2.degree() {
-			return Self::karatsuba(p2, p1, truncate);
-		}
 
-		let p1_slice = &p1.0.as_slice()[0..min(truncate, p1.degree() + 1)];
+		let fact_p2 = p2.into_iter().position(|x| !x.is_zero()).unwrap();
+		let fact_p1 = p1.into_iter().position(|x| !x.is_zero()).unwrap();
+		let eff_p2 = &p2.0[fact_p2..min(truncate, p2.degree() + 1)];
+		let eff_p1 = &p1.0[fact_p1..min(truncate, p1.degree() + 1)];
 
-		let mut binding2 = vec![T::zero(); min(p1.degree() + 1, truncate)];
-		binding2[0..min(p1.degree() + 1, truncate)].clone_from_slice(
-		                                                             &p2.0[0..min(
-			truncate,
-			p2.degree() + 1,
-		)],
-		);
-		let p2_slice = binding2.as_slice();
+		let mut binding = vec![T::zero(); max(eff_p1.len(), eff_p2.len())];
+		let (p1_slice, p2_slice) = if eff_p1.len() > eff_p2.len() {
+			binding[0..eff_p2.len()].clone_from_slice(&eff_p2);
+			(eff_p1, binding.as_slice())
+		} else if eff_p1.len() < eff_p2.len() {
+			binding[0..eff_p1.len()].clone_from_slice(&eff_p1);
+			(binding.as_slice(), eff_p2)
+		} else {
+			(eff_p1, eff_p2)
+		};
 
-		let mut binding_result = vec![T::zero(); (p1_slice.len() << 1) - 1];
+		let mut binding_result =
+			vec![T::zero(); fact_p1 + fact_p2 + p1_slice.len() + p2_slice.len() - 1];
 		let result = binding_result.as_mut_slice();
 
 		let mut binding_buffer = vec![T::zero(); p1_slice.len() - 1 + (p1_slice.len() & 1)];
 		let buffer = binding_buffer.as_mut_slice();
 
-		Self::karatsuba_inplace(p1_slice, p2_slice, result, buffer, true);
+		// println!("Initial call");
+		Self::karatsuba_inplace(
+		                        p1_slice,
+		                        p2_slice,
+		                        &mut result[(fact_p1 + fact_p2)..],
+		                        buffer,
+		);
 		binding_result.truncate(truncate);
 		Self::from(binding_result)
 	}
@@ -136,37 +145,12 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 	// mod X^truncate in result (which is assumed to be large enough to hold the
 	// result)
 	#[inline]
-	pub(crate) fn karatsuba_inplace(p1: &[T],
-	                                p2: &[T],
-	                                result: &mut [T],
-	                                buffer: &mut [T],
-	                                optimize_trailing_zeros: bool)
+	pub(crate) fn karatsuba_inplace(p1: &[T], p2: &[T], result: &mut [T], buffer: &mut [T])
 	{
+		// println!("p1: {p1:?}, p2: {p2:?}");
+		assert_eq!(p1.len(), p2.len());
 		result.fill_with(|| T::zero());
 
-		if optimize_trailing_zeros {
-			let fact_p2 = match p2.iter().position(|x| !x.is_zero()) {
-				Some(index) => index,
-				None => return,
-			};
-			let fact_p1 = match p1.iter().position(|x| !x.is_zero()) {
-				Some(index) => index,
-				None => return,
-			};
-			let eff_p2 = &p2[fact_p2..];
-			let eff_p1 = &p1[fact_p1..];
-			return Self::karatsuba_inplace(
-			                               eff_p1,
-			                               eff_p2,
-			                               &mut result[(fact_p1 + fact_p2)..],
-			                               buffer,
-			                               false,
-			);
-		}
-
-		if p1.len() < p2.len() {
-			return Self::karatsuba_inplace(p2, p1, result, buffer, false);
-		}
 		if p2.len() < 6 {
 			for k in 0..p2.len() {
 				for j in 0..p1.len() {
@@ -201,17 +185,18 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		// This is necessary to obey the borrow checker rules
 		let (lower_result, temp) = result.split_at_mut(q);
 		let (middle_result, upper_result) = temp.split_at_mut(q);
+		// println!("Step 3 call");
 		Self::karatsuba_inplace(
 		                        lower_result,
 		                        middle_result,
 		                        &mut buffer[0..((q << 1) - 1)],
 		                        upper_result,
-		                        false,
 		);
 
 		/* Step 4 */
 		let (_, upper_result) = temp.split_at_mut((p << 1) - q);
-		Self::karatsuba_inplace(&p1[p..n], &p2[p..n], upper_result, lower_result, false);
+		// println!("Step 4 call");
+		Self::karatsuba_inplace(&p1[p..n], &p2[p..n], upper_result, lower_result);
 
 		/* Step 5 */
 		for k in 0..((q << 1) - 1) {
@@ -227,12 +212,12 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		}
 
 		/* Step 8 */
+		// println!("Step 8 call");
 		Self::karatsuba_inplace(
 		                        &p1[0..p],
 		                        &p2[0..p],
 		                        &mut buffer[0..((p << 1) - 1)],
 		                        &mut result[0..p],
-		                        false,
 		);
 
 		/* Step 9 */
