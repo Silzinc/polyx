@@ -52,6 +52,24 @@ impl<T> From<Vec<T>> for Polynomial<T> where T: Zero + Clone
 	}
 }
 
+impl<T> From<&[T]> for Polynomial<T> where T: Zero + Clone
+{
+	#[inline]
+	fn from(values: &[T]) -> Self { Polynomial::from(values.to_vec()) }
+}
+
+impl<T> From<&Vec<T>> for Polynomial<T> where T: Zero + Clone
+{
+	#[inline]
+	fn from(values: &Vec<T>) -> Self { Polynomial::from(values.clone()) }
+}
+
+impl<T> From<T> for Polynomial<T> where T: Zero + Clone
+{
+	#[inline]
+	fn from(value: T) -> Self { Polynomial::from(vec![value]) }
+}
+
 impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone
 {
 	#[inline]
