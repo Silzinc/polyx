@@ -12,26 +12,7 @@ impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
 	#[inline]
 	fn mul(self, other: &Polynomial<T>) -> Polynomial<T>
 	{
-		if self.is_zero() || other.is_zero() {
-			return Polynomial::zero();
-		}
-		let fact_other = other.into_iter().position(|x| !x.is_zero()).unwrap();
-		let fact_self = self.into_iter().position(|x| !x.is_zero()).unwrap();
-		let eff_other = other.into_iter()
-		                     .skip(fact_other)
-		                     .map(|x| x.clone())
-		                     .collect::<Polynomial<T>>();
-		let eff_self = self.into_iter()
-		                   .skip(fact_self)
-		                   .map(|x| x.clone())
-		                   .collect::<Polynomial<T>>();
-
-		let mut result = vec![T::zero(); self.degree() + other.degree() + 1];
-		let eff_res = Polynomial::karatsuba(&eff_self, &eff_other, result.len());
-		for k in 0..=eff_res.degree() {
-			result[k + fact_self + fact_other] = eff_res[k].clone();
-		}
-		Polynomial::from(result)
+		Polynomial::karatsuba(self, other, self.degree() + other.degree() + 1)
 	}
 }
 
@@ -76,6 +57,7 @@ impl<T> Polynomial<T>
 
 impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
 {
+	#[inline]
 	pub fn short_product(p1: &Self, p2: &Self, modulus: usize) -> Self
 	{
 		Self::karatsuba(p1, p2, modulus)
