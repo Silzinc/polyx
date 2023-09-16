@@ -2,9 +2,9 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polynomial<T>(pub(crate) Vec<T>);
 
-pub mod ops;
-pub mod specific;
-pub mod util;
+mod ops;
+mod specific;
+mod util;
 
 mod errors;
 mod parser;

@@ -1,5 +1,6 @@
-pub mod add;
+mod add;
 mod div_algos;
+mod gcd;
 mod inner_macros;
-pub mod multiply;
+mod multiply;
 mod multiply_algos;

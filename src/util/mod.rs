@@ -1,3 +1,3 @@
-pub mod basic;
-pub mod display;
-pub mod instantiate;
+mod basic;
+mod display;
+mod instantiate;
