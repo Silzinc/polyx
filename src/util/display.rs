@@ -102,9 +102,9 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 			}
 			for index in (2..degree).rev() {
 				let c: f64 = self[index].to_f64().unwrap();
-				if index % 3 == 0 {
-					result_str_vec.push("\\\\".to_string());
-				}
+				// if index % 3 == 0 {
+				// 	result_str_vec.push("\\\\".to_string());
+				// }
 				if c > TOL {
 					result_str_vec.push(format!("+{}\\, X^{{{index}}}", pretty_float(c, Self::SIGNIF_FIGS)));
 				} else if c < -TOL {
@@ -112,18 +112,18 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 				}
 			}
 			let c: f64 = self[1].to_f64().unwrap();
-			if degree % 3 == 1 {
-				result_str_vec.push("\\\\".to_string());
-			}
+			// if degree % 3 == 1 {
+			// 	result_str_vec.push("\\\\".to_string());
+			// }
 			if c > TOL {
 				result_str_vec.push(format!("+{}\\, X", pretty_float(c, Self::SIGNIF_FIGS)));
 			} else if c < -TOL {
 				result_str_vec.push(format!("-{}\\, X", pretty_float(-c, Self::SIGNIF_FIGS)));
 			}
 			let c: f64 = self[0].to_f64().unwrap();
-			if degree % 3 == 0 {
-				result_str_vec.push("\\\\".to_string());
-			}
+			// if degree % 3 == 0 {
+			// 	result_str_vec.push("\\\\".to_string());
+			// }
 			if c > TOL {
 				result_str_vec.push(format!("+{}", pretty_float(c, Self::SIGNIF_FIGS)));
 			} else if c < -TOL {
