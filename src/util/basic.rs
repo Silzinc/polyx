@@ -44,15 +44,6 @@ impl_iter!(&'a mut Polynomial<T>,
            std::slice::IterMut<'a, T>,
            iter_mut);
 
-impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone
-{
-	#[inline]
-	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self
-	{
-		Polynomial::from(Vec::from_iter(iter.into_iter()))
-	}
-}
-
 impl<T> Polynomial<T>
 {
 	// Gives the degree of self

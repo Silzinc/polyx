@@ -51,3 +51,12 @@ impl<T> From<Vec<T>> for Polynomial<T> where T: Zero + Clone
 		Polynomial(values)
 	}
 }
+
+impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone
+{
+	#[inline]
+	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self
+	{
+		Polynomial::from(Vec::from_iter(iter.into_iter()))
+	}
+}
