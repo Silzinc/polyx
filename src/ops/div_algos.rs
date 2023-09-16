@@ -20,7 +20,7 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed
 
 	pub fn inverse(u: &Self, modulus: usize) -> Self
 	{
-		if !u[0].is_one() && !(T::zero() - u[0].clone()).is_one() {
+		if !u[0].is_one() && !(-u[0].clone()).is_one() {
 			panic!(
 			       "The constant coefficient of the inverted polynomial must be 1 or -1\nIf you are \
 			        using a polynomial with floating point coefficients, use Polynomial::inverse_float \
@@ -73,6 +73,9 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed
 		if p2.is_zero() {
 			panic!("Polynomial division by zero");
 		}
+		if !p2[p2.degree()].clone().is_one() && !(-p2[p2.degree()].clone()).is_one() {
+			panic!("The leading coefficient of the dividor polynomial must be 1 or -1");
+		}
 		if p1.degree() < p2.degree() {
 			return (Self::zero(), p1.clone());
 		}
@@ -112,6 +115,51 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed
 		let p1_rev = p1.rev();
 		let p2_rev = p2.rev();
 		let h = Self::inverse(&p2_rev, m - n + 1);
+		let mut q = Self::short_product(&p1_rev, &h, m - n + 1);
+		q.rev_inplace();
+
+		let r = p1 - p2 * &q;
+		(q, r)
+	}
+}
+
+impl<T> Polynomial<T> where T: Clone + Debug + Float
+{
+	pub fn euclidean_division_float(p1: &mut Self, p2: &mut Self) -> (Self, Self)
+	{
+		if p2.is_zero() {
+			panic!("Polynomial division by zero");
+		}
+		if p1.degree() < p2.degree() {
+			return (Self::zero(), p1.clone());
+		}
+		let m = p1.degree();
+		let n = p2.degree();
+		p1.rev_inplace();
+		p2.rev_inplace();
+		let h = Self::inverse_float(&p2, m - n + 1);
+		let mut q = Self::short_product(&p1, &h, m - n + 1);
+		p1.rev_inplace();
+		p2.rev_inplace();
+		q.rev_inplace();
+
+		let r = &*p1 - &*p2 * &q;
+		(q, r)
+	}
+
+	pub fn euclidean_division_immutable_float(p1: &Self, p2: &Self) -> (Self, Self)
+	{
+		if p2.is_zero() {
+			panic!("Polynomial division by zero");
+		}
+		if p1.degree() < p2.degree() {
+			return (Self::zero(), p1.clone());
+		}
+		let m = p1.degree();
+		let n = p2.degree();
+		let p1_rev = p1.rev();
+		let p2_rev = p2.rev();
+		let h = Self::inverse_float(&p2_rev, m - n + 1);
 		let mut q = Self::short_product(&p1_rev, &h, m - n + 1);
 		q.rev_inplace();
 
