@@ -108,7 +108,7 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		if truncate == 0 || p1.is_zero() || p2.is_zero() {
 			return Self::zero();
 		}
-
+		// println!("p1: {p1:?}, p2: {p2:?}");
 		let fact_p2 = p2.into_iter().position(|x| !x.is_zero()).unwrap();
 		let fact_p1 = p1.into_iter().position(|x| !x.is_zero()).unwrap();
 		let eff_p2 = &p2.0[fact_p2..min(truncate, p2.degree() + 1)];
