@@ -1,8 +1,11 @@
 use crate::Polynomial;
 use num_traits::Zero;
 use rustfft::{num_complex::Complex, FftNum, FftPlanner};
-use std::fmt::Debug;
-use std::ops::{Mul, Sub};
+use std::{
+	cmp::{max, min},
+	fmt::Debug,
+	ops::{Mul, Sub},
+};
 
 impl<T> Polynomial<T> where T: FftNum
 {
@@ -58,13 +61,14 @@ impl<T> Polynomial<T> where T: FftNum
 impl<T> Polynomial<T>
 	where T: Mul<T, Output = T> + Clone + Zero + Debug /* Zero implicitly requires Add */
 {
-	// Implements the naive convolution algorithm for polynomial multiplication
+	// Implements the naive convolution algorithm for polynomial (short)
+	// multiplication
 	// Time complexity: O(n^2)
 	// Space complexity: O(n)
 	/* Example:
 	let p1 = polynomial![1, 2, 3];
 	let p2 = polynomial![4, 5, 6];
-	let p3 = Polynomial::convolve(&p1, &p2);
+	let p3 = Polynomial::convolve(&p1, &p2, 5);
 	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
 	*/
 	#[inline]
@@ -86,8 +90,6 @@ impl<T> Polynomial<T>
 	}
 }
 
-use std::cmp::{max, min};
-
 impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
 {
 	// Implements the Karatsuba algorithm for polynomial (short) multiplication
@@ -97,7 +99,7 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 	/* Example:
 	let p1 = polynomial![1, 2, 3];
 	let p2 = polynomial![4, 5, 6];
-	let p3 = Polynomial::karatsuba(&p1, &p2);
+	let p3 = Polynomial::karatsuba(&p1, &p2, 5);
 	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
 	*/
 	#[inline]
