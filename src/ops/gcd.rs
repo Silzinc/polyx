@@ -84,12 +84,10 @@ impl<T> Polynomial<T> where T: Debug + Clone + PrimInt + Signed
 		let mut p2_float = p2.into_iter()
 		                     .map(|x| x.clone().to_f64().unwrap())
 		                     .collect::<Polynomial<f64>>();
-		println!("p1_float: {p1_float:?}, p2_float: {p2_float:?}");
 		let res_float = Polynomial::<f64>::gcd_float(&mut p1_float, &mut p2_float);
-		println!("res_float = {:?}", res_float);
-		let lc = res_float[res_float.degree()];
+		let lc_inv = res_float[res_float.degree()].recip();
 		res_float.into_iter()
-		         .map(|x| T::from((x / lc).round()).unwrap())
+		         .map(|x| T::from((x * lc_inv).round()).unwrap())
 		         .collect::<Self>()
 	}
 }
@@ -97,6 +95,16 @@ impl<T> Polynomial<T> where T: Debug + Clone + PrimInt + Signed
 impl<T> Polynomial<T> where T: Debug + Clone + Float
 {
 	pub fn gcd_float(p1: &mut Self, p2: &mut Self) -> Self
+	{
+		let mut res = Self::gcd_float_aux(p1, p2);
+		let lc_inv = res[res.degree()].clone().recip();
+		for i in 0..=res.degree() {
+			res[i] = res[i].clone() * lc_inv.clone();
+		}
+		res
+	}
+
+	fn gcd_float_aux(p1: &mut Self, p2: &mut Self) -> Self
 	{
 		if p2.is_zero() {
 			p1.clone()
