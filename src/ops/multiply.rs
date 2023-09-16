@@ -35,7 +35,6 @@ impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
 	}
 }
 
-// False error by rust-analyzer
 impl_op_all!(Mul, MulAssign, mul, mul_assign, Sub);
 
 impl<T> Polynomial<T>
@@ -72,5 +71,13 @@ impl<T> Polynomial<T>
 			return Self::from(coefs);
 		}
 		Self::powi_aux(self, n, crate::polynomial![T::one()])
+	}
+}
+
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
+{
+	pub fn short_product(p1: &Self, p2: &Self, modulus: usize) -> Self
+	{
+		Self::karatsuba(p1, p2, modulus)
 	}
 }
