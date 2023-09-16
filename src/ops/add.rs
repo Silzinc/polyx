@@ -90,6 +90,7 @@ impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<T, Output = T> + Clo
 			for k in 0..minus_result.0.len() {
 				minus_result[k] = T::zero() - minus_result[k].clone();
 			}
+			minus_result.clean_zeros();
 			return minus_result;
 		}
 		let mut diff = self.0.clone();

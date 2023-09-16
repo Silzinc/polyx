@@ -52,6 +52,19 @@ impl<T> From<Vec<T>> for Polynomial<T> where T: Zero + Clone
 	}
 }
 
+impl<T: Zero> Polynomial<T>
+{
+	#[inline]
+	pub fn clean_zeros(&mut self)
+	{
+		let effective_len = match self.into_iter().rposition(|x| !x.is_zero()) {
+			Some(index) => index + 1,
+			None => 0,
+		};
+		self.0.truncate(effective_len);
+	}
+}
+
 impl<T> From<&[T]> for Polynomial<T> where T: Zero + Clone
 {
 	#[inline]
