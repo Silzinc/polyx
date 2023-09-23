@@ -1,4 +1,4 @@
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::{One, Zero};
 use std::ops::{Add, Index, IndexMut, Mul};
 
@@ -91,7 +91,7 @@ impl<T> Polynomial<T> where T: Zero + Mul<T, Output = T> + Add<T, Output = T> + 
 	}
 }
 
-impl<T: Clone + Zero> Polynomial<T>
+impl<T> Polynomial<T> where T: Clone + Zero + HasNorm
 {
 	pub fn rev(&self) -> Polynomial<T> { self.0.iter().map(|x| x.clone()).rev().collect() }
 

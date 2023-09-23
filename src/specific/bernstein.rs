@@ -1,4 +1,4 @@
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::{PrimInt, Zero};
 use std::fmt::Debug;
 
@@ -20,7 +20,7 @@ fn binom<T: PrimInt, U1: PrimInt, U2: PrimInt>(_n: U1, _k: U2) -> T
 	}
 }
 
-impl<T> Polynomial<T> where T: Debug + PrimInt
+impl<T> Polynomial<T> where T: Debug + PrimInt + HasNorm
 {
 	pub fn bernstein<U: PrimInt>(_m: U, _i: U) -> Self
 	{

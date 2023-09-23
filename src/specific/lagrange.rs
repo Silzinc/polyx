@@ -1,3 +1,4 @@
+use crate::traits::HasNorm;
 use crate::Polynomial;
 use num_traits::{One, Zero};
 use std::fmt::Debug;
@@ -12,6 +13,7 @@ impl<T> Polynomial<T>
 	        + One
 	        + Neg<Output = T>
 	        + Debug
+	        + HasNorm
 {
 	pub fn lagrange<F1, F2>(_x_array: &[F1], _values: &[F2]) -> Self
 		where F1: Into<T> + Clone,

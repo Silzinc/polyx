@@ -1,8 +1,11 @@
-use crate::Polynomial;
-use num_traits::{Float, Signed, Zero};
+use crate::{
+	traits::{FloatLike, HasNorm},
+	Polynomial,
+};
+use num_traits::{Signed, Zero};
 use std::fmt::Debug;
 
-impl<T> Polynomial<T> where T: Clone + Debug + Signed
+impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 {
 	// Implements an algorithm to invert a polynomial modulo an integer
 	// Based on https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf, page 26
@@ -38,14 +41,14 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed
 	}
 }
 
-impl<T> Polynomial<T> where T: Clone + Debug + Float
+impl<T> Polynomial<T> where T: FloatLike + HasNorm
 {
 	// Same function as above, but for floating point coefficients
 	// This allows to invert a polynomial with any non-zero constant coefficient
 	pub fn inverse_float(u: &Self, modulus: usize) -> Self
 	{
 		let two = Self::from(T::one() + T::one());
-		let mut v = Self::from(u[0].recip());
+		let mut v = Self::from(u[0].clone().inv());
 		let mut result_modulus = 1;
 		while result_modulus < modulus {
 			v = Self::short_product(&v, &(&two - Self::short_product(&u, &v, modulus)), modulus);
@@ -55,7 +58,7 @@ impl<T> Polynomial<T> where T: Clone + Debug + Float
 	}
 }
 
-impl<T> Polynomial<T> where T: Clone + Debug + Signed
+impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 {
 	// Implements the Euclidean division of two polynomials
 	// Based on https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf, page 26
@@ -123,7 +126,7 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed
 	}
 }
 
-impl<T> Polynomial<T> where T: Clone + Debug + Float
+impl<T> Polynomial<T> where T: FloatLike
 {
 	pub fn euclidean_division_float(p1: &mut Self, p2: &mut Self) -> (Self, Self)
 	{
@@ -143,7 +146,8 @@ impl<T> Polynomial<T> where T: Clone + Debug + Float
 		p2.rev_inplace();
 		q.rev_inplace();
 
-		let r = &*p1 - &*p2 * &q;
+		let mut r = &*p1 - &*p2 * &q;
+		r.clean_zeros();
 		(q, r)
 	}
 

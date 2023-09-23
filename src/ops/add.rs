@@ -1,4 +1,5 @@
 use super::inner_macros::*;
+use crate::traits::HasNorm;
 use crate::Polynomial;
 use num_traits::Zero;
 use std::fmt::Debug;
@@ -6,7 +7,8 @@ use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
 
 //=================================================================================================
 
-impl<T> Add<&Polynomial<T>> for &Polynomial<T> where T: Add<T, Output = T> + Clone + Zero + Debug
+impl<T> Add<&Polynomial<T>> for &Polynomial<T>
+	where T: Add<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	// Implements addition without taking ownership
 	/* Example:
@@ -43,7 +45,7 @@ impl_op_all!(Add, AddAssign, add, add_assign);
 // Negating a Polynomial
 // ========================================================================================
 
-impl<T> Neg for &Polynomial<T> where T: Neg<Output = T> + Clone + Zero
+impl<T> Neg for &Polynomial<T> where T: Neg<Output = T> + Clone + Zero + HasNorm
 {
 	// Implements negation without taking ownership
 	/* Example:
@@ -57,7 +59,7 @@ impl<T> Neg for &Polynomial<T> where T: Neg<Output = T> + Clone + Zero
 		Polynomial::from(self.0.iter().map(|x| -x.clone()).collect::<Vec<T>>())
 	}
 }
-impl<T> Neg for Polynomial<T> where T: Neg<Output = T> + Clone + Zero
+impl<T> Neg for Polynomial<T> where T: Neg<Output = T> + Clone + Zero + HasNorm
 {
 	// Version that takes ownership
 	type Output = Polynomial<T>;
@@ -69,7 +71,7 @@ impl<T> Neg for Polynomial<T> where T: Neg<Output = T> + Clone + Zero
 // Subtraction
 // =================================================================================================
 
-impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<T, Output = T> + Clone + Zero
+impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<Output = T> + Clone + Zero + HasNorm
 {
 	// Implements subtraction without taking ownership
 	/* Example:
@@ -101,5 +103,4 @@ impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<T, Output = T> + Clo
 	}
 }
 
-// False error by rust-analyzer
 impl_op_all!(Sub, SubAssign, sub, sub_assign);

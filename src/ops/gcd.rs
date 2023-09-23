@@ -1,8 +1,8 @@
+use crate::traits::{FloatLike, SignedIntLike};
 use crate::Polynomial;
-use num_traits::{Float, PrimInt, Signed, Zero};
-use std::fmt::Debug;
+use num_traits::Zero;
 
-impl<T> Polynomial<T> where T: Debug + Clone + Signed
+impl<T> Polynomial<T> where T: SignedIntLike
 {
 	// Input : Two polynomials p1 and p2
 	// Output : gcd(p1, p2)
@@ -74,7 +74,7 @@ impl<T> Polynomial<T> where T: Debug + Clone + Signed
 	pub fn gcd_immutable(p1: &Self, p2: &Self) -> Self { Self::gcd(&mut p1.clone(), &mut p2.clone()) }
 }
 
-impl<T> Polynomial<T> where T: Debug + Clone + PrimInt + Signed
+impl<T> Polynomial<T> where T: SignedIntLike
 {
 	pub fn gcd_rounded(p1: &Self, p2: &Self) -> Self
 	{
@@ -92,25 +92,25 @@ impl<T> Polynomial<T> where T: Debug + Clone + PrimInt + Signed
 	}
 }
 
-impl<T> Polynomial<T> where T: Debug + Clone + Float
+impl<T> Polynomial<T> where T: FloatLike
 {
 	pub fn gcd_float(p1: &mut Self, p2: &mut Self) -> Self
 	{
 		let mut res = Self::gcd_float_aux(p1, p2);
-		let lc_inv = res[res.degree()].clone().recip();
+		let lc_inv = res[res.degree()].clone().inv();
 		for i in 0..=res.degree() {
 			res[i] = res[i].clone() * lc_inv.clone();
 		}
 		res
 	}
 
-	fn gcd_float_aux(p1: &mut Self, p2: &mut Self) -> Self
+	pub fn gcd_float_aux(p1: &mut Self, p2: &mut Self) -> Self
 	{
 		if p2.is_zero() {
 			p1.clone()
 		} else {
 			let (_, mut r) = Self::euclidean_division_float(p1, p2);
-			Self::gcd_float(p2, &mut r)
+			Self::gcd_float_aux(p2, &mut r)
 		}
 	}
 
@@ -120,7 +120,7 @@ impl<T> Polynomial<T> where T: Debug + Clone + Float
 	}
 }
 
-impl<T> Polynomial<T> where T: Clone + Debug + PrimInt + Signed
+impl<T> Polynomial<T> where T: SignedIntLike
 {
 	// Input : Two polynomials p1 and p2
 	// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2
@@ -138,7 +138,7 @@ impl<T> Polynomial<T> where T: Clone + Debug + PrimInt + Signed
 	}
 }
 
-impl<T> Polynomial<T> where T: Clone + Debug + Float
+impl<T> Polynomial<T> where T: FloatLike
 {
 	// Input : Two polynomials p1 and p2
 	// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2

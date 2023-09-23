@@ -1,5 +1,6 @@
 use crate::{
 	errors::PolynomialError::{self, *},
+	traits::HasNorm,
 	Polynomial,
 };
 use num_traits::{FromPrimitive, One, ToPrimitive, Zero};
@@ -23,13 +24,14 @@ impl fmt::Display for Ops
 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
 	{
+		use Ops::*;
 		match self {
-			Ops::Add => write!(f, "{}", "'+'"),
-			Ops::Min => write!(f, "{}", "'-'"),
-			Ops::Mul => write!(f, "{}", "'*'"),
-			Ops::Div => write!(f, "{}", "'/'"),
-			Ops::Pow => write!(f, "{}", "'^'"),
-			Ops::Open => write!(f, "{}", "'('"),
+			Add => write!(f, "{}", "'+'"),
+			Min => write!(f, "{}", "'-'"),
+			Mul => write!(f, "{}", "'*'"),
+			Div => write!(f, "{}", "'/'"),
+			Pow => write!(f, "{}", "'^'"),
+			Open => write!(f, "{}", "'('"),
 		}
 	}
 }
@@ -38,11 +40,12 @@ impl Ops
 {
 	fn prio(&self) -> u32
 	{
+		use Ops::*;
 		match self {
-			Ops::Mul => 2,
-			Ops::Div => 2,
-			Ops::Pow => 3,
-			Ops::Open => 0,
+			Mul => 2,
+			Div => 2,
+			Pow => 3,
+			Open => 0,
 			_ => 1,
 		}
 	}
@@ -74,6 +77,7 @@ impl<T> Parser<T>
 	        + Sub<T, Output = T>
 	        + Neg<Output = T>
 	        + Debug
+	        + HasNorm
 {
 	fn execute_bin_operator(&mut self) -> Result<(), PolynomialError<T>>
 	{
@@ -374,6 +378,7 @@ impl<T> Polynomial<T>
 	        + Sub<T, Output = T>
 	        + Neg<Output = T>
 	        + Debug
+	        + HasNorm
 {
 	fn parse_string_checked(s: String) -> Result<Self, PolynomialError<T>>
 	{

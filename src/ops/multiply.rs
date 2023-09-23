@@ -1,11 +1,11 @@
 use super::inner_macros::*;
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::{One, Zero};
 use std::fmt::Debug;
 use std::ops::{Mul, MulAssign, Sub};
 
 impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
-	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
+	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	type Output = Polynomial<T>;
 
@@ -19,7 +19,8 @@ impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
 impl_op_all!(Mul, MulAssign, mul, mul_assign, Sub);
 
 impl<T> Polynomial<T>
-	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + Debug
+	where T:
+		      Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + Debug + HasNorm
 {
 	// Implements fast integer exponentiation
 	/* Example:
@@ -55,7 +56,8 @@ impl<T> Polynomial<T>
 	}
 }
 
-impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
+impl<T> Polynomial<T>
+	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	#[inline]
 	// Returns p1 * p2 modulo modulus
