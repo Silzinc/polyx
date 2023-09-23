@@ -1,65 +1,65 @@
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::Zero;
-use rustfft::{num_complex::Complex, FftNum, FftPlanner};
+// use rustfft::{num_complex::Complex, FftNum, FftPlanner};
 use std::{
 	cmp::{max, min},
 	fmt::Debug,
 	ops::{Mul, Sub},
 };
 
-impl<T> Polynomial<T> where T: FftNum
-{
-	// Implements the Schönhage-Strassen algorithm for polynomial multiplication
-	// This implementation is not optimal and therefore not used by default
-	// Also, it only works with FftNum types including floating points
-	// Time complexity: O(n log n log log n)
-	// Space complexity: O(n)
-	pub fn schonhage_strassen(p1: &Self, p2: &Self) -> Self
-	{
-		let zero = T::from_i32(0).unwrap();
-		if p1.degree() == 0 {
-			let c = p1[0];
-			Self::from(Vec::from_iter(p2.into_iter().map(|&x| c * x)))
-		} else if p2.degree() == 0 {
-			let c = p2[0];
-			Self::from(Vec::from_iter(p1.into_iter().map(|&x| c * x)))
-		} else {
-			let n = p1.degree() + p2.degree() + 1;
-			let mut planner = FftPlanner::new();
-			let mut buffer = vec![Complex { re: zero, im: zero }; n];
+// impl<T> Polynomial<T> where T: FftNum + HasNorm
+// {
+// 	// Implements the Schönhage-Strassen algorithm for polynomial multiplication
+// 	// This implementation is not optimal and therefore not used by default
+// 	// Also, it only works with FftNum types including floating points
+// 	// Time complexity: O(n log n log log n)
+// 	// Space complexity: O(n)
+// 	pub fn schonhage_strassen(p1: &Self, p2: &Self) -> Self
+// 	{
+// 		let zero = T::from_i32(0).unwrap();
+// 		if p1.degree() == 0 {
+// 			let c = p1[0];
+// 			Self::from(Vec::from_iter(p2.into_iter().map(|&x| c * x)))
+// 		} else if p2.degree() == 0 {
+// 			let c = p2[0];
+// 			Self::from(Vec::from_iter(p1.into_iter().map(|&x| c * x)))
+// 		} else {
+// 			let n = p1.degree() + p2.degree() + 1;
+// 			let mut planner = FftPlanner::new();
+// 			let mut buffer = vec![Complex { re: zero, im: zero }; n];
 
-			{
-				let mut p2_buffer = vec![Complex { re: zero, im: zero }; n];
+// 			{
+// 				let mut p2_buffer = vec![Complex { re: zero, im: zero }; n];
 
-				for k in 0..=p1.degree() {
-					buffer[k].re = p1[k];
-				}
-				for k in 0..=p2.degree() {
-					p2_buffer[k].re = p2[k];
-				}
+// 				for k in 0..=p1.degree() {
+// 					buffer[k].re = p1[k];
+// 				}
+// 				for k in 0..=p2.degree() {
+// 					p2_buffer[k].re = p2[k];
+// 				}
 
-				let fft = planner.plan_fft_forward(n);
-				fft.process(&mut buffer);
-				fft.process(&mut p2_buffer);
+// 				let fft = planner.plan_fft_forward(n);
+// 				fft.process(&mut buffer);
+// 				fft.process(&mut p2_buffer);
 
-				for k in 0..n {
-					buffer[k] = buffer[k] * p2_buffer[k];
-				}
-			}
+// 				for k in 0..n {
+// 					buffer[k] = buffer[k] * p2_buffer[k];
+// 				}
+// 			}
 
-			let fft_inv = planner.plan_fft_inverse(n);
-			fft_inv.process(&mut buffer);
+// 			let fft_inv = planner.plan_fft_inverse(n);
+// 			fft_inv.process(&mut buffer);
 
-			let new_p1: Vec<T> = buffer.iter()
-			                           .map(|&x| T::from(x.re / T::from_usize(n).unwrap()))
-			                           .collect();
-			Self::from(new_p1)
-		}
-	}
-}
+// 			let new_p1: Vec<T> = buffer.iter()
+// 			                           .map(|&x| T::from(x.re /
+// T::from_usize(n).unwrap())) 			                           .collect();
+// 			Self::from(new_p1)
+// 		}
+// 	}
+// }
 
 impl<T> Polynomial<T>
-	where T: Mul<T, Output = T> + Clone + Zero + Debug /* Zero implicitly requires Add */
+	where T: Mul<T, Output = T> + Clone + Zero + Debug + HasNorm /* Zero implicitly requires Add */
 {
 	// Implements the naive convolution algorithm for polynomial (short)
 	// multiplication
@@ -90,7 +90,8 @@ impl<T> Polynomial<T>
 	}
 }
 
-impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug
+impl<T> Polynomial<T>
+	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	// Implements the Karatsuba algorithm for polynomial (short) multiplication
 	// Based on this paper : https://members.loria.fr/EThome/files/kara.pdf
