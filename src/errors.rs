@@ -35,22 +35,23 @@ impl<T: fmt::Debug> fmt::Display for PolynomialError<T>
 {
 	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result
 	{
+		use PolynomialError::*;
 		match self {
-			PolynomialError::NoBinaryOperator => write!(f, "NoBinaryOperator"),
-			PolynomialError::BinaryOperatorZeroOperand(op) =>
+			NoBinaryOperator => write!(f, "NoBinaryOperator"),
+			BinaryOperatorZeroOperand(op) =>
 				write!(f, "BinaryOperatorZeroOperand({})", op),
-			PolynomialError::BinaryOperatorOneOperand(op, p) =>
+			BinaryOperatorOneOperand(op, p) =>
 				write!(f, "BinaryOperatorOneOperand({}, {})", op, p),
-			PolynomialError::ImpossiblePower(p, n) => write!(f, "ImpossiblePower({}, {:?})", p, n),
-			PolynomialError::ImpossiblePower2Polynomials(p1, p2) =>
+			ImpossiblePower(p, n) => write!(f, "ImpossiblePower({}, {:?})", p, n),
+			ImpossiblePower2Polynomials(p1, p2) =>
 				write!(f, "ImpossiblePower2Polynomials({}, {})", p1, p2),
-			PolynomialError::ImpossibleDivision(p1, p2) =>
+			ImpossibleDivision(p1, p2) =>
 				write!(f, "ImpossibleDivision({}, {})", p1, p2),
-			PolynomialError::ImpossibleOpen => write!(f, "ImpossibleOpen"),
-			PolynomialError::ImpossibleClose => write!(f, "ImpossibleClose"),
-			PolynomialError::UnaryMinusFailed(op) => write!(f, "UnaryMinusFailed({})", op),
-			PolynomialError::UnsupportedCharacter(c) => write!(f, "UnsupportedCharacter({})", c),
-			PolynomialError::EmptyStringInput => write!(f, "EmptyStringInput"),
+			ImpossibleOpen => write!(f, "ImpossibleOpen"),
+			ImpossibleClose => write!(f, "ImpossibleClose"),
+			UnaryMinusFailed(op) => write!(f, "UnaryMinusFailed({})", op),
+			UnsupportedCharacter(c) => write!(f, "UnsupportedCharacter({})", c),
+			EmptyStringInput => write!(f, "EmptyStringInput"),
 		}
 	}
 }
