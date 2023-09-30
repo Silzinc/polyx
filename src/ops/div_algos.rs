@@ -91,6 +91,9 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 		p1.rev_inplace();
 		p2.rev_inplace();
 		q.rev_inplace();
+		// Some zero coefficients are lost in the short-product and reverse. We have to
+		// recover them to make deg(q) = m - n
+		q <<= m - n - q.degree();
 
 		let r = &*p1 - &*p2 * &q;
 		(q, r)
@@ -120,6 +123,9 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 		let h = Self::inverse(&p2_rev, m - n + 1);
 		let mut q = Self::short_product(&p1_rev, &h, m - n + 1);
 		q.rev_inplace();
+		// Some zero coefficients are lost in the short-product and reverse. We have to
+		// recover them to make deg(q) = m - n
+		q <<= m - n - q.degree();
 
 		let r = p1 - p2 * &q;
 		(q, r)
@@ -145,6 +151,9 @@ impl<T> Polynomial<T> where T: FloatLike
 		p1.rev_inplace();
 		p2.rev_inplace();
 		q.rev_inplace();
+		// Some zero coefficients are lost in the short-product and reverse. We have to
+		// recover them to make deg(q) = m - n
+		q <<= m - n - q.degree();
 
 		let mut r = &*p1 - &*p2 * &q;
 		r.clean_zeros();
@@ -166,6 +175,9 @@ impl<T> Polynomial<T> where T: FloatLike
 		let h = Self::inverse_float(&p2_rev, m - n + 1);
 		let mut q = Self::short_product(&p1_rev, &h, m - n + 1);
 		q.rev_inplace();
+		// Some zero coefficients are lost in the short-product and reverse. We have to
+		// recover them to make deg(q) = m - n
+		q <<= m - n - q.degree();
 
 		let r = p1 - p2 * &q;
 		(q, r)
