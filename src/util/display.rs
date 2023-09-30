@@ -5,9 +5,9 @@ use std::fmt::{self, Debug};
 
 fn pretty_float(x: f64, n: u8) -> String
 {
-	// Gives string represeting x with n + 1 significant figures
+	// Gives string representing x with n + 1 significant figures
 	if x.abs() < TOL {
-		"0".to_string();
+		return "0".to_string();
 	}
 	if x < 0. {
 		return format!("-{}", pretty_float(-x, n));
@@ -47,26 +47,30 @@ fn pretty_float(x: f64, n: u8) -> String
 
 fn pretty_float_complex(x: Complex<f64>, n: u8) -> String
 {
-	// Gives string represeting x with n + 1 significant figures
+	// Gives string reprenseting x with n + 1 significant figures
+	// Takes into account the potential parenthesis necessary
 	if x.norm() < TOL {
 		return "0".to_string();
 	}
 	if x.im.abs() < TOL {
-		return pretty_float(x.im, n);
+		return pretty_float(x.re, n);
 	}
 	if x.re.abs() < TOL {
+		if x.im < 0. {
+			return format!("({}i)", pretty_float(x.im, n));
+		}
 		return format!("{}i", pretty_float(x.im, n));
 	}
 	if x.im < 0. {
-		return format!("{}-{}i", pretty_float(x.re, n), pretty_float(x.im, n));
+		return format!("({}-{}i)", pretty_float(x.re, n), pretty_float(x.im, n));
 	}
-	return format!("{}+{}i", pretty_float(x.re, n), pretty_float(x.im, n));
+	return format!("({}+{}i)", pretty_float(x.re, n), pretty_float(x.im, n));
 }
 
 fn to_complexf64<T>(c: Complex<T>) -> Option<Complex<f64>>
 	where T: Clone + ToPrimitive
 {
-	Some(Complex::new(c.re.to_f64()?, c.re.to_f64()?))
+	Some(Complex::new(c.re.to_f64()?, c.im.to_f64()?))
 }
 
 impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
@@ -195,13 +199,14 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 			if c1.norm() > TOL {
 				if c0.norm() > TOL {
 					format!(
-					        "({})\\, X + {}",
+					        "{}\\, X + {}",
 					        pretty_float_complex(c1, Self::SIGNIF_FIGS),
 					        pretty_float_complex(c0, Self::SIGNIF_FIGS)
 					)
 				} else {
-					format!("({})\\, X", pretty_float_complex(c1, Self::SIGNIF_FIGS))
+					format!("{}\\, X", pretty_float_complex(c1, Self::SIGNIF_FIGS))
 				}
+			// No need to check when c1 < -TOL in this particular case
 			} else {
 				format!("{}", pretty_float_complex(c0, Self::SIGNIF_FIGS))
 			}
@@ -209,9 +214,10 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 			let mut result_str_vec = Vec::with_capacity(degree + 2);
 			let c = to_complexf64(self[degree].clone()).unwrap();
 			result_str_vec.push(format!(
-				"({})\\, X^{{{degree}}}",
+				"{}\\, X^{{{degree}}}",
 				pretty_float_complex(c, Self::SIGNIF_FIGS)
 			));
+
 			for index in (2..degree).rev() {
 				let c = to_complexf64(self[index].clone()).unwrap();
 				// if index % 3 == 0 {
@@ -219,7 +225,7 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 				// }
 				if c.norm() > TOL {
 					result_str_vec.push(format!(
-						"+({})\\, X^{{{index}}}",
+						"+{}\\, X^{{{index}}}",
 						pretty_float_complex(c, Self::SIGNIF_FIGS)
 					));
 				}
@@ -229,17 +235,18 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c.norm() > TOL {
-				result_str_vec.push(format!("+({})\\, X", pretty_float_complex(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}\\, X", pretty_float_complex(c, Self::SIGNIF_FIGS)));
 			}
 			let c = to_complexf64(self[0].clone()).unwrap();
 			// if degree % 3 == 0 {
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c.norm() > TOL {
-				result_str_vec.push(format!("+({})", pretty_float_complex(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}", pretty_float_complex(c, Self::SIGNIF_FIGS)));
 			}
 			result_str_vec.join("")
 			              .chars()
+			              // This map allows for better scientifc notation display
 			              .map(|c| {
 				              if c == '*' {
 					              "\\cdot".to_string()
