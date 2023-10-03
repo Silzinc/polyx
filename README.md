@@ -29,15 +29,15 @@ use polyx::{polynomial, polynomial_expr, Polynomial};
 
 ```rust
 let p1 = polynomial![0, 2, 1]; // X^2 + 2X
-let p2: Polynomial<i32> = polynomial_expr!("X(X + 2)");
+let p2: Polynomial<i32> = polynomial_expr!(X(X + 2));
 assert_eq!(p1, p2);
 ```
 
 #### Using some operations on polynomials
 
 ```rust
-let p1: Polynomial<i32> = polynomial_expr!("X^3");
-let p2: Polynomial<i32> = polynomial_expr!("X^2(1 + X)");
+let p1: Polynomial<i32> = polynomial_expr!(X^3);
+let p2: Polynomial<i32> = polynomial_expr!(X^2(1 + X));
 assert_eq!(&p1 - &p2, polynomial![0, 0, 1]);
 assert_eq!(&p1 + &p2, polynomial![0, 0, 1, 2]);
 assert_eq!(&p1 * &p2, polynomial![0, 0, 0, 0, 0, 1, 1]);
