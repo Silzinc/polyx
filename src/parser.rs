@@ -402,11 +402,11 @@ impl<T> Polynomial<T>
 		parser.pols_vec.pop().ok_or(EmptyStringInput)
 	}
 
-	pub fn parse_string(s: String) -> Self
+	pub fn parse_string(s: String) -> Result<Self, String>
 	{
 		match Self::parse_string_checked(s) {
-			Ok(p) => p,
-			Err(e) => panic!("{e}"),
+			Ok(p) => Ok(p),
+			Err(e) => Err(format!("{e}")),
 		}
 	}
 }
@@ -414,6 +414,6 @@ impl<T> Polynomial<T>
 #[macro_export]
 macro_rules! polynomial_expr {
 	($($e:expr)*) => {
-		Polynomial::parse_string(stringify!($($e)*).to_string())
+		Polynomial::parse_string(stringify!($($e)*).to_string()).unwrap()
 	};
 }
