@@ -348,7 +348,7 @@ impl<T> ComplexParser<T>
 
 impl<T> Polynomial<Complex<T>> where T: Primitive
 {
-	fn parse_string_complex_checked(s: String) -> Result<Self, PolynomialError>
+	fn parse_string_checked(s: String) -> Result<Self, PolynomialError>
 	{
 		let mut parser = ComplexParser::<T> { pols_vec:  Vec::new(),
 		                                      ops_vec:   Vec::new(),
@@ -371,18 +371,11 @@ impl<T> Polynomial<Complex<T>> where T: Primitive
 		parser.pols_vec.pop().ok_or(EmptyStringInput)
 	}
 
-	pub fn parse_string_complex(s: String) -> Result<Self, String>
+	pub fn parse_string(s: String) -> Result<Self, String>
 	{
-		match Self::parse_string_complex_checked(s) {
+		match Self::parse_string_checked(s) {
 			Ok(p) => Ok(p),
 			Err(e) => Err(format!("{e}")),
 		}
 	}
-}
-
-#[macro_export]
-macro_rules! polynomial_complex_expr {
-	($($e:expr)*) => {
-		Polynomial::parse_complex_string(stringify!($($e)*).to_string()).unwrap()
-	};
 }

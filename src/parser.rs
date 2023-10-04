@@ -379,10 +379,3 @@ impl<T> Polynomial<T> where T: Primitive
 		}
 	}
 }
-
-#[macro_export]
-macro_rules! polynomial_expr {
-	($($e:expr)*) => {
-		Polynomial::parse_string(stringify!($($e)*).to_string()).unwrap()
-	};
-}
