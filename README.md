@@ -29,15 +29,20 @@ use polyx::{polynomial, polynomial_expr, Polynomial};
 
 ```rust
 let p1 = polynomial![0, 2, 1]; // X^2 + 2X
-let p2: Polynomial<i32> = polynomial_expr!(X(X + 2));
+let p2 = Polynomial::<i32>::parse_string("X(X + 2)".to_string()).unwrap();
+let p3 = Polynomial::<i32>::parse_string("X ^ 2 + 2X".to_string()).unwrap();
 assert_eq!(p1, p2);
+assert_eq!(p1, p3);
+
+let p4 = Polynomial::<Complex<f64>>::parse_string("i (X + i)^2".to_string()).unwrap();
+assert_eq!(p4.eval(Complex::new(0.0, -1.0)), Complex::from(0.));
 ```
 
 #### Using some operations on polynomials
 
 ```rust
-let p1: Polynomial<i32> = polynomial_expr!(X^3);
-let p2: Polynomial<i32> = polynomial_expr!(X^2(1 + X));
+let p1 = Polynomial::<i32>::parse_string("X ^ 3".to_string()).unwrap();
+let p2 = Polynomial::<i32>::parse_string("X ^ 2(1 + X)".to_string()).unwrap();
 assert_eq!(&p1 - &p2, polynomial![0, 0, -1]);
 assert_eq!(&p1 + &p2, polynomial![0, 0, 1, 2]);
 assert_eq!(&p1 * &p2, polynomial![0, 0, 0, 0, 0, 1, 1]);
