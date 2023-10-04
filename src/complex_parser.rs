@@ -2,7 +2,7 @@ use super::parser::Ops;
 use crate::{
 	errors::PolynomialError::{self, *},
 	polynomial,
-	traits::Primitive,
+	traits::{PolyxNum, Primitive},
 	Polynomial,
 };
 use num::Complex;
@@ -36,7 +36,7 @@ struct ComplexParser<T>
 
 impl<T> ComplexParser<T>
 	where T: Primitive,
-	      Complex<T>: crate::traits::Num
+	      Complex<T>: PolyxNum
 {
 	fn execute_bin_operator(&mut self) -> Result<(), PolynomialError>
 	{

@@ -10,7 +10,7 @@ pub trait HasNorm
 	fn norm(&self) -> f64;
 }
 
-pub trait Num:
+pub trait PolyxNum:
 	Debug
 	+ num_traits::Num
 	+ PartialEq
@@ -22,11 +22,11 @@ pub trait Num:
 	+ Div<Output = Self>
 	+ HasNorm
 	+ PartialEq
-  + Display
+	+ Display
 {
 }
 
-pub trait Primitive: Num + ToPrimitive + FromPrimitive + PartialOrd {}
+pub trait Primitive: PolyxNum + ToPrimitive + FromPrimitive + PartialOrd {}
 
 duplicate::duplicate! {
 	[primitive_type; [f64]; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
@@ -34,21 +34,22 @@ duplicate::duplicate! {
 		#[inline]
 		fn norm(&self) -> f64 { (*self as f64).abs() }
 	}
-	impl Num for primitive_type {}
+	impl PolyxNum for primitive_type {}
 	impl Primitive for primitive_type {}
 }
 
-impl<T: Primitive> Num for Complex<T> {}
-impl<T: Primitive> HasNorm for Complex<T> {
-  #[inline]
-  fn norm(&self) -> f64 { (Complex {
-    re: self.re.to_f64().unwrap(),
-    im: self.im.to_f64().unwrap(),
-  }).norm() }
+impl<T: Primitive> PolyxNum for Complex<T> {}
+impl<T: Primitive> HasNorm for Complex<T>
+{
+	#[inline]
+	fn norm(&self) -> f64
+	{
+		(Complex { re: self.re.to_f64().unwrap(),
+		           im: self.im.to_f64().unwrap(), }).norm()
+	}
 }
 
-
-pub trait FloatLike: Num + Inv<Output = Self> {}
+pub trait FloatLike: PolyxNum + Inv<Output = Self> {}
 impl FloatLike for f32 {}
 impl FloatLike for f64 {}
 impl FloatLike for Complex<f32> {}
