@@ -84,7 +84,7 @@ impl<T> Parser<T> where T: Primitive
 		   && p2 == X
 		{
 			if self.pols_vec[self.pols_vec.len() - 1].is_zero() {
-				return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
+				return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
 			}
 			// This is to optimize a bit the parsing of an expression like "cX^pow"
 			let c: T = self.pols_vec.pop().unwrap()[0].clone();
@@ -94,7 +94,7 @@ impl<T> Parser<T> where T: Primitive
 				self.pols_vec.push(polynomial![c] << pow as usize);
 				Ok(())
 			} else {
-				Err(ImpossiblePower(p2.to_string(), format!("{c:?}")))
+				Err(ImpossiblePower(p2.to_string(), c.to_string()))
 			}
 		} else {
 			match op {
@@ -117,12 +117,12 @@ impl<T> Parser<T> where T: Primitive
 							    .push(polynomial![T::from_f64(c2.powf(c)).unwrap()])
 						} else if c == c.round() {
 							if c.is_sign_negative() {
-								return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
+								return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
 							}
 							let r: Polynomial<T> = p2.powi(c.to_usize().unwrap());
 							self.pols_vec.push(r)
 						} else {
-							return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
+							return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
 						}
 					} else {
 						return Err(ImpossiblePower2Polynomials(p2.to_string(), p1.to_string()));
@@ -375,7 +375,7 @@ impl<T> Polynomial<T> where T: Primitive
 	{
 		match Self::parse_string_checked(s) {
 			Ok(p) => Ok(p),
-			Err(e) => Err(format!("{e}")),
+			Err(e) => Err(e.to_string()),
 		}
 	}
 }
