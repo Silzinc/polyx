@@ -1,4 +1,5 @@
 use crate::*;
+use num::Complex;
 
 #[test]
 fn test_instantiate()
@@ -8,6 +9,9 @@ fn test_instantiate()
 	let p3: Polynomial<i32> = polynomial_expr!(X ^ 2 + 2X);
 	assert_eq!(p1, p2);
 	assert_eq!(p1, p3);
+
+	let p4 = Polynomial::<Complex<f64>>::parse_string_complex("i (X + i)^2".to_string()).unwrap();
+	println!("{}", p4);
 }
 
 #[test]

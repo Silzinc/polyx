@@ -7,7 +7,7 @@ mod ops;
 mod specific;
 mod util;
 
-// mod complex_parser;
+mod complex_parser;
 pub mod consts;
 mod errors;
 mod parser;

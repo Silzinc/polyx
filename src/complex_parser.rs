@@ -6,8 +6,19 @@ use crate::{
 	Polynomial,
 };
 use num::Complex;
-use num_traits::{ToPrimitive, Zero};
-use std::fmt::{self, Debug};
+use num_traits::{FromPrimitive, ToPrimitive, Zero};
+
+fn to_complexf64<T>(c: Complex<T>) -> Option<Complex<f64>>
+	where T: Clone + ToPrimitive
+{
+	Some(Complex::new(c.re.to_f64()?, c.im.to_f64()?))
+}
+
+fn from_complexf64<T>(c: Complex<f64>) -> Option<Complex<T>>
+	where T: Clone + FromPrimitive
+{
+	Some(Complex::new(T::from_f64(c.re)?, T::from_f64(c.im)?))
+}
 
 struct ComplexParser<T>
 {
@@ -36,7 +47,7 @@ impl<T> ComplexParser<T>
 		let p1: Polynomial<Complex<T>> = self.pols_vec.pop().ok_or(BinaryOperatorZeroOperand(op))?;
 		let p2: Polynomial<Complex<T>> = self.pols_vec
 		                                     .pop()
-		                                     .ok_or(BinaryOperatorOneOperand(op, format!("{p1:?}")))?;
+		                                     .ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
 		   && self.ops_vec.len() != 0
@@ -47,17 +58,21 @@ impl<T> ComplexParser<T>
 		   && p2 == X
 		{
 			if self.pols_vec[self.pols_vec.len() - 1].is_zero() {
-				return Err(ImpossiblePower(format!("{:?}", p2), format!("{:?}", p1[0])));
+				return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
 			}
 			// This is to optimize a bit the parsing of an expression like "cX^pow"
 			let c: Complex<T> = self.pols_vec.pop().unwrap()[0].clone();
-			let pow: f64 = p1[0].to_f64().unwrap();
-			if pow == pow.round() && pow >= 0. {
-				self.ops_vec.pop();
-				self.pols_vec.push(polynomial![c] << pow as usize);
-				Ok(())
+			if let Some(pow) = p1[0].to_f64() {
+				// Conversion only works if the imaginary part is 0
+				if pow == pow.round() && pow >= 0. {
+					self.ops_vec.pop();
+					self.pols_vec.push(polynomial![c] << pow as usize);
+					Ok(())
+				} else {
+					Err(ImpossiblePower(p2.to_string(), c.to_string()))
+				}
 			} else {
-				Err(ImpossiblePower(format!("{:?}", p2), format!("{:?}", c)))
+				Err(ImpossiblePower(p2.to_string(), c.to_string()))
 			}
 		} else {
 			match op {
@@ -69,26 +84,26 @@ impl<T> ComplexParser<T>
 						let c: Complex<T> = Complex::from(T::one()) / p1[0].clone();
 						self.pols_vec.push(polynomial![c] * p2)
 					} else {
-						return Err(ImpossibleDivision(p2.as_string(), p1.as_string()));
+						return Err(ImpossibleDivision(p2.to_string(), p1.to_string()));
 					},
 				Ops::Pow =>
 					if p1.degree() == 0 {
-						let c: f64 = p1[0].to_f64().unwrap();
+						let c: Complex<f64> = to_complexf64(p1[0].clone()).unwrap();
 						if p2.degree() == 0 {
-							let c2: f64 = p2[0].to_f64().unwrap();
+							let c2: Complex<f64> = to_complexf64(p2[0].clone()).unwrap();
 							self.pols_vec
-							    .push(polynomial![T::from_f64(c2.powf(c)).unwrap()])
-						} else if c == c.round() {
-							if c.is_sign_negative() {
-								return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+							    .push(polynomial![from_complexf64(c2.powc(c)).unwrap()])
+						} else if c.im.is_zero() && c.re == c.re.round() {
+							if c.re.is_sign_negative() {
+								return Err(ImpossiblePower(p2.to_string(), c.re.to_string()));
 							}
-							let r: Polynomial<T> = p2.powi(c.to_usize().unwrap());
+							let r: Polynomial<Complex<T>> = p2.powi(c.re.to_usize().unwrap());
 							self.pols_vec.push(r)
 						} else {
-							return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+							return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
 						}
 					} else {
-						return Err(ImpossiblePower2Polynomials(p2.as_string(), p1.as_string()));
+						return Err(ImpossiblePower2Polynomials(p2.to_string(), p1.to_string()));
 					},
 				Ops::Open => return Err(ImpossibleOpen),
 			};
@@ -106,15 +121,17 @@ impl<T> ComplexParser<T>
 			if self.num == 0 {
 				self.pols_vec.push(Polynomial::zero());
 			} else {
-				let reduced_num = T::from_f64(self.num.to_f64().unwrap() / 10u64.pow(self.nb_decs)).expect("Cannot convert f64 to parsed type");
+				let reduced_num = T::from_f64(self.num.to_f64().unwrap() / 10u64.pow(self.nb_decs) as f64).expect("Cannot convert f64 to parsed type");
 				let complex_num = match self.icount % 4 {
-					0 => Complex::new(reduced_num, 0.),
-					1 => Complex::new(0., reduced_num),
-					2 => Complex::new(0., -reduced_num),
-					3 => Complex::new(-reduced_num, 0.),
+					0 => Complex::new(reduced_num, T::zero()),
+					1 => Complex::new(T::zero(), reduced_num),
+					2 => Complex::new(T::zero() - reduced_num, T::zero()),
+					3 => Complex::new(T::zero(), T::zero() - reduced_num),
+					_ => unreachable!(),
 				};
 				if self.is_min {
-					self.pols_vec.push(polynomial![-complex_num]);
+					self.pols_vec
+					    .push(polynomial![Complex::<T>::zero() - complex_num]);
 				} else {
 					self.pols_vec.push(polynomial![complex_num]);
 				}
@@ -169,7 +186,7 @@ impl<T> ComplexParser<T>
 	fn read_char(&mut self, c: char) -> Result<(), PolynomialError>
 	{
 		#[allow(non_snake_case)]
-		let X = polynomial![T::zero(), T::one()];
+		let X = polynomial![Complex::zero(), Complex::from(T::one())];
 		match c {
 			' ' => self.push_num()?,
 			'+' => {
@@ -218,7 +235,8 @@ impl<T> ComplexParser<T>
 					// In that case we have an expression like -X, which should only be seen at the
 					// beginning of an expression
 					self.is_min = false;
-					self.pols_vec.push(polynomial![T::zero() - T::one()]);
+					self.pols_vec
+					    .push(polynomial![Complex::from(T::zero() - T::one())]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.pols_vec.push(X);
@@ -232,7 +250,8 @@ impl<T> ComplexParser<T>
 				if self.is_min {
 					// The idea is to turning any (...) into ((...)) and -(...) into (-1 * (...))
 					self.is_min = false;
-					self.pols_vec.push(polynomial![T::zero() - T::one()]);
+					self.pols_vec
+					    .push(polynomial![Complex::from(T::zero() - T::one())]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.ops_vec.push(Ops::Open);
@@ -327,20 +346,20 @@ impl<T> ComplexParser<T>
 	}
 }
 
-impl<T> Polynomial<T> where T: Primitive
+impl<T> Polynomial<Complex<T>> where T: Primitive
 {
 	fn parse_string_complex_checked(s: String) -> Result<Self, PolynomialError>
 	{
-		let mut parser = Parser::<T> { pols_vec:  Vec::new(),
-		                               ops_vec:   Vec::new(),
-		                               reads_num: false,
-		                               reads_dec: false,
-		                               num:       0u64,
-		                               nb_decs:   0u32,
-		                               unary_min: true,
-		                               is_min:    false,
-		                               is_factor: false,
-		                               icount:    0u32, };
+		let mut parser = ComplexParser::<T> { pols_vec:  Vec::new(),
+		                                      ops_vec:   Vec::new(),
+		                                      reads_num: false,
+		                                      reads_dec: false,
+		                                      num:       0u64,
+		                                      nb_decs:   0u32,
+		                                      unary_min: true,
+		                                      is_min:    false,
+		                                      is_factor: false,
+		                                      icount:    0u32, };
 		let s_chars: Vec<char> = s.chars().collect();
 		for c in s_chars {
 			parser.read_char(c)?;
