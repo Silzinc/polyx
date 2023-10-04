@@ -1,13 +1,11 @@
 use crate::{
 	errors::PolynomialError::{self, *},
-	traits::HasNorm,
+	polynomial,
+	traits::Primitive,
 	Polynomial,
 };
-use num_traits::{FromPrimitive, One, ToPrimitive, Zero};
-use std::{
-	fmt::{self, Debug},
-	ops::{Add, Div, Mul, Neg, Sub},
-};
+use num_traits::{ToPrimitive, Zero};
+use std::fmt::{self, Debug};
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub(crate) enum Ops
@@ -38,7 +36,7 @@ impl fmt::Display for Ops
 
 impl Ops
 {
-	fn prio(&self) -> u32
+	pub(crate) fn prio(&self) -> u32
 	{
 		use Ops::*;
 		match self {
@@ -64,31 +62,18 @@ struct Parser<T>
 	is_factor: bool,
 }
 
-impl<T> Parser<T>
-	where T: FromPrimitive
-	        + ToPrimitive
-	        + Zero
-	        + One
-	        + Mul<T, Output = T>
-	        + Add<T, Output = T>
-	        + Clone
-	        + PartialEq
-	        + Div<T, Output = T>
-	        + Sub<T, Output = T>
-	        + Neg<Output = T>
-	        + Debug
-	        + HasNorm
+impl<T> Parser<T> where T: Primitive
 {
-	fn execute_bin_operator(&mut self) -> Result<(), PolynomialError<T>>
+	fn execute_bin_operator(&mut self) -> Result<(), PolynomialError>
 	{
 		#[allow(non_snake_case)]
-		let X = crate::polynomial![T::zero(), T::one()];
+		let X = polynomial![T::zero(), T::one()];
 		// println!("Got {:?} and {:?}", self.pols_vec, op);
 		let op: Ops = self.ops_vec.pop().ok_or(NoBinaryOperator)?;
 		let p1: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorZeroOperand(op))?;
 		let p2: Polynomial<T> = self.pols_vec
 		                            .pop()
-		                            .ok_or(BinaryOperatorOneOperand(op, p1.as_string()))?;
+		                            .ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
 		   && self.ops_vec.len() != 0
@@ -99,20 +84,17 @@ impl<T> Parser<T>
 		   && p2 == X
 		{
 			if self.pols_vec[self.pols_vec.len() - 1].is_zero() {
-				return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+				return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
 			}
 			// This is to optimize a bit the parsing of an expression like "cX^pow"
 			let c: T = self.pols_vec.pop().unwrap()[0].clone();
 			let pow: f64 = p1[0].to_f64().unwrap();
 			if pow == pow.round() && pow >= 0. {
-				let l: usize = pow as usize + 1;
-				let mut p = crate::polynomial![T::zero(); l];
-				p[l - 1] = c;
 				self.ops_vec.pop();
-				self.pols_vec.push(p);
+				self.pols_vec.push(polynomial![c] << pow as usize);
 				Ok(())
 			} else {
-				Err(ImpossiblePower(p2.as_string(), c))
+				Err(ImpossiblePower(p2.to_string(), format!("{c:?}")))
 			}
 		} else {
 			match op {
@@ -122,9 +104,9 @@ impl<T> Parser<T>
 				Ops::Div =>
 					if p1.degree() == 0 {
 						let c: T = T::one() / p1[0].clone();
-						self.pols_vec.push(crate::polynomial![c] * p2)
+						self.pols_vec.push(polynomial![c] * p2)
 					} else {
-						return Err(ImpossibleDivision(p2.as_string(), p1.as_string()));
+						return Err(ImpossibleDivision(p2.to_string(), p1.to_string()));
 					},
 				Ops::Pow =>
 					if p1.degree() == 0 {
@@ -132,18 +114,18 @@ impl<T> Parser<T>
 						if p2.degree() == 0 {
 							let c2: f64 = p2[0].to_f64().unwrap();
 							self.pols_vec
-							    .push(crate::polynomial![T::from_f64(c2.powf(c)).unwrap()])
+							    .push(polynomial![T::from_f64(c2.powf(c)).unwrap()])
 						} else if c == c.round() {
 							if c.is_sign_negative() {
-								return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+								return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
 							}
 							let r: Polynomial<T> = p2.powi(c.to_usize().unwrap());
 							self.pols_vec.push(r)
 						} else {
-							return Err(ImpossiblePower(p2.as_string(), p1[0].clone()));
+							return Err(ImpossiblePower(p2.to_string(), format!("{:?}", p1[0].clone())));
 						}
 					} else {
-						return Err(ImpossiblePower2Polynomials(p2.as_string(), p1.as_string()));
+						return Err(ImpossiblePower2Polynomials(p2.to_string(), p1.to_string()));
 					},
 				Ops::Open => return Err(ImpossibleOpen),
 			};
@@ -151,7 +133,7 @@ impl<T> Parser<T>
 		}
 	}
 
-	fn push_num(&mut self) -> Result<(), PolynomialError<T>>
+	fn push_num(&mut self) -> Result<(), PolynomialError>
 	{
 		if self.reads_num {
 			if self.is_factor {
@@ -162,11 +144,11 @@ impl<T> Parser<T>
 				self.pols_vec.push(Polynomial::zero());
 			} else {
 				if self.is_min {
-					self.pols_vec.push(crate::polynomial![T::from_f64(
+					self.pols_vec.push(polynomial![T::from_f64(
 						-(self.num as f64) / 10f64.powi(self.nb_decs as i32)
 					).unwrap()]);
 				} else {
-					self.pols_vec.push(crate::polynomial![T::from_f64(
+					self.pols_vec.push(polynomial![T::from_f64(
 						self.num as f64 / 10f64.powi(self.nb_decs as i32)
 					).unwrap()]);
 				}
@@ -181,7 +163,7 @@ impl<T> Parser<T>
 		Ok(())
 	}
 
-	fn push_bin_operator(&mut self, op: Ops) -> Result<(), PolynomialError<T>>
+	fn push_bin_operator(&mut self, op: Ops) -> Result<(), PolynomialError>
 	{
 		if self.is_min {
 			Err(UnaryMinusFailed(op))
@@ -207,10 +189,10 @@ impl<T> Parser<T>
 		self.unary_min = false;
 	}
 
-	fn read_char(&mut self, c: char) -> Result<(), PolynomialError<T>>
+	fn read_char(&mut self, c: char) -> Result<(), PolynomialError>
 	{
 		#[allow(non_snake_case)]
-		let X = crate::polynomial![T::zero(), T::one()];
+		let X = polynomial![T::zero(), T::one()];
 		match c {
 			' ' => self.push_num()?,
 			'+' => {
@@ -259,7 +241,7 @@ impl<T> Parser<T>
 					// In that case we have an expression like -X, which should only be seen at the
 					// beginning of an expression
 					self.is_min = false;
-					self.pols_vec.push(crate::polynomial![T::zero() - T::one()]);
+					self.pols_vec.push(polynomial![T::zero() - T::one()]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.pols_vec.push(X);
@@ -273,7 +255,7 @@ impl<T> Parser<T>
 				if self.is_min {
 					// The idea is to turning any (...) into ((...)) and -(...) into (-1 * (...))
 					self.is_min = false;
-					self.pols_vec.push(crate::polynomial![T::zero() - T::one()]);
+					self.pols_vec.push(polynomial![T::zero() - T::one()]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.ops_vec.push(Ops::Open);
@@ -365,22 +347,9 @@ impl<T> Parser<T>
 	}
 }
 
-impl<T> Polynomial<T>
-	where T: FromPrimitive
-	        + ToPrimitive
-	        + Zero
-	        + One
-	        + Mul<T, Output = T>
-	        + Add<T, Output = T>
-	        + Clone
-	        + PartialEq
-	        + Div<T, Output = T>
-	        + Sub<T, Output = T>
-	        + Neg<Output = T>
-	        + Debug
-	        + HasNorm
+impl<T> Polynomial<T> where T: Primitive
 {
-	fn parse_string_checked(s: String) -> Result<Self, PolynomialError<T>>
+	fn parse_string_checked(s: String) -> Result<Self, PolynomialError>
 	{
 		let mut parser = Parser::<T> { pols_vec:  Vec::new(),
 		                               ops_vec:   Vec::new(),
