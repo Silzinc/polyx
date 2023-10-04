@@ -1,7 +1,7 @@
-use crate::{consts::TOL, Polynomial};
+use crate::{consts::{TOL, SIGNIF_FIGS}, Polynomial, traits::Primitive};
 use num::complex::Complex;
-use num_traits::{Num, ToPrimitive, Zero};
-use std::fmt::{self, Debug};
+use num_traits::ToPrimitive;
+use std::fmt;
 
 fn pretty_float(x: f64, n: u8) -> String
 {
@@ -73,7 +73,7 @@ fn to_complexf64<T>(c: Complex<T>) -> Option<Complex<f64>>
 	Some(Complex::new(c.re.to_f64()?, c.im.to_f64()?))
 }
 
-impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
+impl<T> Polynomial<T> where T: Primitive
 {
 	// Gives a LaTeX code to print the polynomial as long as the coefficients can be
 	// turned into f64 Only the first SIGNIF_FIGS + 1 significant figures are
@@ -83,7 +83,6 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 	let p = polynomial![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	println!("{}", p.to_latex_string());
 	*/
-	const SIGNIF_FIGS: u8 = 2;
 
 	pub fn to_latex_string(&self) -> String
 	{
@@ -97,7 +96,7 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 		if degree == 0 {
 			let c: f64 = self[0].to_f64().unwrap();
 			if c.abs() > TOL {
-				format!("{}", pretty_float(c, Self::SIGNIF_FIGS))
+				format!("{}", pretty_float(c, SIGNIF_FIGS))
 			} else {
 				String::from("0")
 			}
@@ -108,29 +107,29 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 				if c0 > TOL {
 					format!(
 					        "{}\\, X + {}",
-					        pretty_float(c1, Self::SIGNIF_FIGS),
-					        pretty_float(c0, Self::SIGNIF_FIGS)
+					        pretty_float(c1, SIGNIF_FIGS),
+					        pretty_float(c0, SIGNIF_FIGS)
 					)
 				} else if c0 < -TOL {
 					format!(
 					        "{}\\, X - {}",
-					        pretty_float(c1, Self::SIGNIF_FIGS),
-					        pretty_float(-c0, Self::SIGNIF_FIGS)
+					        pretty_float(c1, SIGNIF_FIGS),
+					        pretty_float(-c0, SIGNIF_FIGS)
 					)
 				} else {
-					format!("{}\\, X", pretty_float(c1, Self::SIGNIF_FIGS))
+					format!("{}\\, X", pretty_float(c1, SIGNIF_FIGS))
 				}
 			// No need to check when c1 < -TOL in this particular case
 			} else {
-				format!("{}", pretty_float(c0, Self::SIGNIF_FIGS))
+				format!("{}", pretty_float(c0, SIGNIF_FIGS))
 			}
 		} else {
 			let mut result_str_vec = Vec::with_capacity(degree + 2);
 			let c: f64 = self[degree].to_f64().unwrap();
 			if c >= 0. {
-				result_str_vec.push(format!("{}\\, X^{{{degree}}}", pretty_float(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("{}\\, X^{{{degree}}}", pretty_float(c, SIGNIF_FIGS)));
 			} else {
-				result_str_vec.push(format!("-{}\\, X^{{{degree}}}", pretty_float(-c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("-{}\\, X^{{{degree}}}", pretty_float(-c, SIGNIF_FIGS)));
 			}
 			for index in (2..degree).rev() {
 				let c: f64 = self[index].to_f64().unwrap();
@@ -138,9 +137,9 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 				// 	result_str_vec.push("\\\\".to_string());
 				// }
 				if c > TOL {
-					result_str_vec.push(format!("+{}\\, X^{{{index}}}", pretty_float(c, Self::SIGNIF_FIGS)));
+					result_str_vec.push(format!("+{}\\, X^{{{index}}}", pretty_float(c, SIGNIF_FIGS)));
 				} else if c < -TOL {
-					result_str_vec.push(format!("-{}\\, X^{{{index}}}", pretty_float(-c, Self::SIGNIF_FIGS)));
+					result_str_vec.push(format!("-{}\\, X^{{{index}}}", pretty_float(-c, SIGNIF_FIGS)));
 				}
 			}
 			let c: f64 = self[1].to_f64().unwrap();
@@ -148,18 +147,18 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c > TOL {
-				result_str_vec.push(format!("+{}\\, X", pretty_float(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}\\, X", pretty_float(c, SIGNIF_FIGS)));
 			} else if c < -TOL {
-				result_str_vec.push(format!("-{}\\, X", pretty_float(-c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("-{}\\, X", pretty_float(-c, SIGNIF_FIGS)));
 			}
 			let c: f64 = self[0].to_f64().unwrap();
 			// if degree % 3 == 0 {
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c > TOL {
-				result_str_vec.push(format!("+{}", pretty_float(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}", pretty_float(c, SIGNIF_FIGS)));
 			} else if c < -TOL {
-				result_str_vec.push(format!("-{}", pretty_float(-c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("-{}", pretty_float(-c, SIGNIF_FIGS)));
 			}
 			result_str_vec.join("")
 			              .chars()
@@ -175,7 +174,7 @@ impl<T> Polynomial<T> where T: ToPrimitive + Clone + Zero
 	}
 }
 
-impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
+impl<T> Polynomial<Complex<T>> where T: Primitive
 {
 	pub fn to_latex_string_complex(&self) -> String
 	{
@@ -189,7 +188,7 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 		if degree == 0 {
 			let c = to_complexf64(self[0].clone()).unwrap();
 			if c.norm() > TOL {
-				format!("{}", pretty_float_complex(c, Self::SIGNIF_FIGS))
+				format!("{}", pretty_float_complex(c, SIGNIF_FIGS))
 			} else {
 				String::from("0")
 			}
@@ -200,22 +199,22 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 				if c0.norm() > TOL {
 					format!(
 					        "{}\\, X + {}",
-					        pretty_float_complex(c1, Self::SIGNIF_FIGS),
-					        pretty_float_complex(c0, Self::SIGNIF_FIGS)
+					        pretty_float_complex(c1, SIGNIF_FIGS),
+					        pretty_float_complex(c0, SIGNIF_FIGS)
 					)
 				} else {
-					format!("{}\\, X", pretty_float_complex(c1, Self::SIGNIF_FIGS))
+					format!("{}\\, X", pretty_float_complex(c1, SIGNIF_FIGS))
 				}
 			// No need to check when c1 < -TOL in this particular case
 			} else {
-				format!("{}", pretty_float_complex(c0, Self::SIGNIF_FIGS))
+				format!("{}", pretty_float_complex(c0, SIGNIF_FIGS))
 			}
 		} else {
 			let mut result_str_vec = Vec::with_capacity(degree + 2);
 			let c = to_complexf64(self[degree].clone()).unwrap();
 			result_str_vec.push(format!(
 				"{}\\, X^{{{degree}}}",
-				pretty_float_complex(c, Self::SIGNIF_FIGS)
+				pretty_float_complex(c, SIGNIF_FIGS)
 			));
 
 			for index in (2..degree).rev() {
@@ -226,7 +225,7 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 				if c.norm() > TOL {
 					result_str_vec.push(format!(
 						"+{}\\, X^{{{index}}}",
-						pretty_float_complex(c, Self::SIGNIF_FIGS)
+						pretty_float_complex(c, SIGNIF_FIGS)
 					));
 				}
 			}
@@ -235,14 +234,14 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c.norm() > TOL {
-				result_str_vec.push(format!("+{}\\, X", pretty_float_complex(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}\\, X", pretty_float_complex(c, SIGNIF_FIGS)));
 			}
 			let c = to_complexf64(self[0].clone()).unwrap();
 			// if degree % 3 == 0 {
 			// 	result_str_vec.push("\\\\".to_string());
 			// }
 			if c.norm() > TOL {
-				result_str_vec.push(format!("+{}", pretty_float_complex(c, Self::SIGNIF_FIGS)));
+				result_str_vec.push(format!("+{}", pretty_float_complex(c, SIGNIF_FIGS)));
 			}
 			result_str_vec.join("")
 			              .chars()
@@ -259,7 +258,7 @@ impl<T> Polynomial<Complex<T>> where T: ToPrimitive + Num + Clone + Debug
 	}
 }
 
-impl<T> fmt::Display for Polynomial<T> where T: ToPrimitive + Clone + Zero
+impl<T> fmt::Display for Polynomial<T> where T: Primitive
 {
 	// Allows to display the polynomial in a fancy way
 	/* Example:
@@ -305,6 +304,47 @@ impl<T> fmt::Display for Polynomial<T> where T: ToPrimitive + Clone + Zero
 			result_str_vec.push(format!("+{:10.3e}", c));
 		} else if c < -TOL {
 			result_str_vec.push(format!("-{:10.3e}", -c));
+		}
+
+		write!(f, "{}", result_str_vec.join("\n"))
+	}
+}
+
+impl<T> fmt::Display for Polynomial<Complex<T>> where T: Primitive
+{
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result
+	{
+		if self.is_empty() {
+			return write!(f, "Polynomial(-Inf)");
+		}
+		let degree = self.degree();
+		if degree == 0 {
+			return write!(
+			              f,
+			              "{}",
+			              format!("Polynomial(0)\n {:10.3e}", to_complexf64(self[0].clone()).unwrap())
+			);
+		}
+
+		let mut result_str_vec = Vec::with_capacity(degree + 2);
+
+		result_str_vec.push(format!("Polynomial({degree})"));
+
+		let c: Complex<f64> = to_complexf64(self[degree].clone()).unwrap();
+		if c.norm() > TOL {
+			result_str_vec.push(format!(" ({:10.3e}) X^{degree}", c));
+		}
+
+		for index in (1..degree).rev() {
+			let c: Complex<f64> = to_complexf64(self[index].clone()).unwrap();
+			if c.norm() > TOL {
+				result_str_vec.push(format!("+({:10.3e}) X^{index}", c));
+			}
+		}
+
+		let c: Complex<f64> = to_complexf64(self[0].clone()).unwrap();
+		if c.norm() > TOL {
+			result_str_vec.push(format!("+{:10.3e}", c));
 		}
 
 		write!(f, "{}", result_str_vec.join("\n"))
