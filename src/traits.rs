@@ -34,10 +34,10 @@ duplicate::duplicate! {
 		#[inline]
 		fn norm(&self) -> f64 { (*self as f64).abs() }
 	}
-	impl PolyxNum for primitive_type {}
 	impl Primitive for primitive_type {}
 }
 
+impl<T: Primitive> PolyxNum for T {}
 impl<T: Primitive> PolyxNum for Complex<T> {}
 impl<T: Primitive> HasNorm for Complex<T>
 {
