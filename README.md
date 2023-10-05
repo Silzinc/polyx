@@ -82,7 +82,12 @@ assert_eq!(&p >> 2, polynomial![2]);
 
 ```rust
 let p = polynomial![1, 2, -5, -3];
-println!("{}", p.to_latex_string());
+println!("{}", p.to_latex());
+
+let p = Polynomial::<Complex<f64>>::parse_string("(1 + i)X² +(-7i -1)X + 4i - 2X".to_string()).unwrap();
+println!("{}", p.to_latex());
 ```
 
-Output: $-3X^3 -5X^2 + 2X + 1$
+Outputs: 
+$$-3.00\, X^{3}-5.00\, X^{2}+2.00\, X+1.00$$
+$$(1.00+1.00i)\, X^{2}-(3.00+7.00i)\, X+4.00i$$
