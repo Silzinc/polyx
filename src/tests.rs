@@ -58,5 +58,9 @@ fn test_shift()
 fn test_latex()
 {
 	let p = polynomial![1, 2, -5, -3];
-	println!("{}", p.to_latex_string());
+	println!("{}", p.to_latex());
+
+	let p =
+		Polynomial::<Complex<f64>>::parse_string("(1 + i)X² +(-7i -1)X + 4i - 2X".to_string()).unwrap();
+	println!("{}", p.to_latex());
 }
