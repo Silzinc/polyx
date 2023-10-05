@@ -1,5 +1,3 @@
-// #![feature(specialization)] // not stable yet
-#![feature(associated_type_bounds)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polynomial<T>(pub(crate) Vec<T>);
 
