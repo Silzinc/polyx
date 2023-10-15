@@ -11,7 +11,7 @@ Many other superb crates already exist: [`polynomial`](https://docs.rs/polynomia
 * A vector based `Polynomial` struct and a `polynomial` macro to instantiate one.
 * Multiplication with a memory efficient Karatsuba algorithm, addition, subtraction. These operations can be used both on a bare `Polynomial` and on a reference `&Polynomial` to preserve its ownership.
 * Euclidean division and modulo, but these are not implemented through the `/` and `%` operators as it requires different functions if the polynomial contains integers or floats as coefficients. The crate rather provides `euclidean_division` and `euclidean_division_float` functions. These take mutable inputs for better performance, but these functions `euclidean_division_immutable(_float)` are also provided.
-* Parsing polynomials from strings with the `polynomial_expr` macro.
+* Parsing polynomials from strings with the `parse_string` function.
 * Inverting a polynomial modulo $X^n$ with the `inverse(_float)` functions.
 * Polynomial short product with the `short_product` function.
 * Degree left and right shift with `<<` and `>>` operators. `p >> n` returns the quotient of $p\div X^n$ and `p << n` returns $X^n p$.
