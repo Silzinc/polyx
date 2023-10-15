@@ -61,9 +61,9 @@ fn pretty_term_complex(x: Complex<f64>, degree: usize) -> String
 		return "".to_string();
 	}
 	let xterm = if degree == 1 {
-		"\\, X".to_string()
+		"\\ X".to_string()
 	} else {
-		format!("\\, X^{{{}}}", degree)
+		format!("\\ X^{{{}}}", degree)
 	};
 
 	let real_with_foreop = if x.re.abs() < TOL {
