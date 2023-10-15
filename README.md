@@ -22,7 +22,7 @@ The crate considers flaoting point coefficients as zero if their value goes belo
 ### Examples
 
 ```rust
-use polyx::{polynomial, polynomial_expr, Polynomial};
+use polyx::{polynomial, Polynomial};
 ```
 
 #### Creating a polynomial
@@ -89,5 +89,5 @@ println!("{}", p.to_latex());
 ```
 
 Outputs: 
-$$-3.00\, X^{3}-5.00\, X^{2}+2.00\, X+1.00$$
-$$(1.00+1.00i)\, X^{2}-(3.00+7.00i)\, X+4.00i$$
+$$-3.00\ X^{3}-5.00\ X^{2}+2.00\ X+1.00$$
+$$(1.00+1.00i)\ X^{2}-(3.00+7.00i)\ X+4.00i$$
