@@ -7,27 +7,26 @@ use std::fmt::Debug;
 
 impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 {
-	// Implements an algorithm to invert a polynomial modulo an integer
-	// Based on https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf, page 26
-	// Time complexity: O(M(n)), where M(n) is the time complexity of the
-	// multiplication algorithm and n the degree of u
-	// Space complexity: O(n)
-	/* Example:
-	let p = polynomial![1, -4, 0, -2, 5, 1, 1, 1];
-	let inv10 = Polynomial::inverse(&p, 10);
-	assert_eq!(Polynomial::short_product(&p, &inv10, 10),
-						 Polynomial::from(1));
-	*/
-	// Be careful with this function, overflows can happen pretty easily (i32 might
-	// not be big enough)
+	/// Implements an algorithm to invert a polynomial modulo an integer.
+	/// Based on <https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf>, page 26.
+	/// Time complexity: O(M(n)), where M(n) is the time complexity of the
+	/// multiplication algorithm and n the degree of u. Space complexity: O(n)
+	/// Example:
+	/// ```rust
+	/// use polyx::*;
+	/// let p = polynomial![1, -4, 0, -2, 5, 1, 1, 1];
+	/// let inv10 = Polynomial::inverse(&p, 10);
+	/// assert_eq!(Polynomial::short_product(&p, &inv10, 10), Polynomial::from(1));
+	/// ```
+	/// Be careful with this function, overflows can happen pretty easily (i32
+	/// might not be big enough).
 
 	pub fn inverse(u: &Self, modulus: usize) -> Self
 	{
 		if !u[0].is_one() && !(-u[0].clone()).is_one() {
 			panic!(
-			       "The constant coefficient of the inverted polynomial must be 1 or -1\nIf you are \
-			        using a polynomial with floating point coefficients, use Polynomial::inverse_float \
-			        instead"
+			       "The constant coefficient of the inverted polynomial must be 1 or -1\nIf you are using a polynomial with floating point coefficients, \
+			        use Polynomial::inverse_float instead"
 			);
 		}
 		let two = Self::from(T::one() + T::one());
@@ -43,8 +42,8 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 
 impl<T> Polynomial<T> where T: FloatLike + HasNorm
 {
-	// Same function as above, but for floating point coefficients
-	// This allows to invert a polynomial with any non-zero constant coefficient
+	/// Same function as `inverse`, but for floating point coefficients
+	/// This allows to invert a polynomial with any non-zero constant coefficient
 	pub fn inverse_float(u: &Self, modulus: usize) -> Self
 	{
 		let two = Self::from(T::one() + T::one());
@@ -60,17 +59,31 @@ impl<T> Polynomial<T> where T: FloatLike + HasNorm
 
 impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 {
-	// Implements the Euclidean division of two polynomials
-	// Based on https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf, page 26
-	// Time complexity: O(M(m)), where M(m) is the time complexity of the
-	// multiplication algorithm and m the degree of p1
-	/* Example:
-	let mut a = polynomial![1, 0, 2];
-	let mut b = polynomial![1, 1];
-	let (q, r) = Polynomial::euclidean_division(&mut a, &mut b);
-
-	assert_eq!(b * q + r, a);
-	*/
+	/// Performs Euclidean division of two polynomials. Based on <https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf>, page 26.
+	///
+	/// # Arguments
+	///
+	/// * `p1` - The dividend polynomial.
+	/// * `p2` - The divisor polynomial.
+	///
+	/// # Panics
+	///
+	/// This function will panic if the divisor polynomial is zero or if its
+	/// leading coefficient is not 1 or -1.
+	///
+	/// # Returns
+	///
+	/// A tuple containing the quotient and remainder polynomials.
+	///
+	/// # Example
+	/// ```rust
+	/// use polyx::*;
+	/// let mut a = polynomial![1, 0, 2];
+	/// let mut b = polynomial![1, 1];
+	/// let (q, r) = Polynomial::euclidean_division(&mut a, &mut b);
+	///
+	/// assert_eq!(b * q + r, a);
+	/// ```
 	pub fn euclidean_division(p1: &mut Self, p2: &mut Self) -> (Self, Self)
 	{
 		if p2.is_zero() {
@@ -99,15 +112,18 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 		(q, r)
 	}
 
-	// This version forces to create a copy of p1 and p2 and is therefore less
-	// efficient, but allows for immutable arguments
-	/* Example:
-	let a = polynomial![1, 0, 2];
-	let b = polynomial![1, 1];
-	let (q, r) = Polynomial::euclidean_division_immutable(&a, &b);
-
-	assert_eq!(b * q + r, a);
-	*/
+	/// This version forces to create a copy of p1 and p2 and is therefore less
+	/// efficient, but allows for immutable arguments.
+	/// Example:
+	/// ```rust
+	/// use polyx::*;
+	///
+	/// let a = polynomial![1, 0, 2];
+	/// let b = polynomial![1, 1];
+	/// let (q, r) = Polynomial::euclidean_division_immutable(&a, &b);
+	///
+	/// assert_eq!(b * q + r, a);
+	/// ```
 	pub fn euclidean_division_immutable(p1: &Self, p2: &Self) -> (Self, Self)
 	{
 		if p2.is_zero() {

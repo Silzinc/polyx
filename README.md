@@ -1,6 +1,6 @@
 ## The `polyx` crate
 
-#### *A Rust crate to handle polynomials*
+#### *A Rust crate to handle polynomials. For a more detailed documentation, run `cargo doc` and open `target/docs/polyx/index.html` in your browser.*
 
 ### Why another crate to handle polynomials ?
 

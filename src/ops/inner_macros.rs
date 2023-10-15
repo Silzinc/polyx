@@ -30,9 +30,9 @@ macro_rules! impl_op_polynomial {
 	};
 }
 
-// The following macros allow to add polynomials with numbers
-// Rust's specialization feature is not stable yet so we have to duplicate the
-// code for each primitive type
+// The following macros allow to implement operations between polynomials and
+// numbers Rust's specialization feature is not stable yet so we have to
+// duplicate the code for each primitive type.
 #[macro_export(local_inner_macros)]
 macro_rules! impl_op_some_primitive {
 	($op:ident, $method:ident, $t:ty $(,$requirements:ident)*) => {

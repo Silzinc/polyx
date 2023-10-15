@@ -5,11 +5,14 @@ use std::{
 	ops::{Div, Mul, Sub},
 };
 
+/// Trait for types that have a norm.
 pub trait HasNorm
 {
+	/// Returns the norm of the implementing object.
 	fn norm(&self) -> f64;
 }
 
+/// Trait for types that can be used as coefficients in a polynomial.
 pub trait PolyxNum:
 	Debug
 	+ num_traits::Num
@@ -26,6 +29,8 @@ pub trait PolyxNum:
 {
 }
 
+/// A trait representing a primitive type that can be used in Polyx operations
+/// (typically non-complex numbers).
 pub trait Primitive: PolyxNum + ToPrimitive + FromPrimitive + PartialOrd {}
 
 duplicate::duplicate! {
@@ -49,11 +54,13 @@ impl<T: Primitive> HasNorm for Complex<T>
 	}
 }
 
+/// Trait for types that behave like floating-point numbers.
 pub trait FloatLike: PolyxNum + Inv<Output = Self> {}
 impl FloatLike for f32 {}
 impl FloatLike for f64 {}
 impl FloatLike for Complex<f32> {}
 impl FloatLike for Complex<f64> {}
 
+/// A trait for types that behave like signed integers, including having a norm.
 pub trait SignedIntLike: Clone + Debug + PrimInt + Signed + HasNorm {}
 impl<T> SignedIntLike for T where T: Clone + Debug + PrimInt + Signed + HasNorm {}

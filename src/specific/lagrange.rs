@@ -1,27 +1,19 @@
-use crate::traits::HasNorm;
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::{One, Zero};
-use std::fmt::Debug;
-use std::ops::{Div, Mul, Neg, Sub};
+use std::{
+	fmt::Debug,
+	ops::{Div, Mul, Neg, Sub},
+};
 
-impl<T> Polynomial<T>
-	where T: Mul<T, Output = T>
-	        + Sub<T, Output = T>
-	        + Div<T, Output = T>
-	        + Clone
-	        + Zero
-	        + One
-	        + Neg<Output = T>
-	        + Debug
-	        + HasNorm
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Div<T, Output = T> + Clone + Zero + One + Neg<Output = T> + Debug + HasNorm
 {
+	/// Computes the interpolating polynomial of minimal degree between the two
+	/// arrays with the Lagrange barycentric method.
+	/// NOTE : it is not recommended to use this method if `T` is an integer type
 	pub fn lagrange<F1, F2>(_x_array: &[F1], _values: &[F2]) -> Self
 		where F1: Into<T> + Clone,
 		      F2: Into<T> + Clone
 	{
-		// Computes the interpolating polynomial of minimal degree between the two
-		// arrays with the Lagrange barycentric method
-		// NOTE : it is not recommended to use this method if T is an integer type
 		#[allow(non_snake_case)]
 		let X = crate::polynomial![T::zero(), T::one()];
 		let n = _x_array.len(); // Output will be of degree n - 1

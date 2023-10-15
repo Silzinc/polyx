@@ -71,9 +71,7 @@ impl<T> Parser<T> where T: Primitive
 		// println!("Got {:?} and {:?}", self.pols_vec, op);
 		let op: Ops = self.ops_vec.pop().ok_or(NoBinaryOperator)?;
 		let p1: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorZeroOperand(op))?;
-		let p2: Polynomial<T> = self.pols_vec
-		                            .pop()
-		                            .ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
+		let p2: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
 		   && self.ops_vec.len() != 0
@@ -113,8 +111,7 @@ impl<T> Parser<T> where T: Primitive
 						let c: f64 = p1[0].to_f64().unwrap();
 						if p2.degree() == 0 {
 							let c2: f64 = p2[0].to_f64().unwrap();
-							self.pols_vec
-							    .push(polynomial![T::from_f64(c2.powf(c)).unwrap()])
+							self.pols_vec.push(polynomial![T::from_f64(c2.powf(c)).unwrap()])
 						} else if c == c.round() {
 							if c.is_sign_negative() {
 								return Err(ImpossiblePower(p2.to_string(), p1[0].to_string()));
@@ -144,13 +141,11 @@ impl<T> Parser<T> where T: Primitive
 				self.pols_vec.push(Polynomial::zero());
 			} else {
 				if self.is_min {
-					self.pols_vec.push(polynomial![T::from_f64(
-						-(self.num as f64) / 10f64.powi(self.nb_decs as i32)
-					).unwrap()]);
+					self.pols_vec
+					    .push(polynomial![T::from_f64(-(self.num as f64) / 10f64.powi(self.nb_decs as i32)).unwrap()]);
 				} else {
-					self.pols_vec.push(polynomial![T::from_f64(
-						self.num as f64 / 10f64.powi(self.nb_decs as i32)
-					).unwrap()]);
+					self.pols_vec
+					    .push(polynomial![T::from_f64(self.num as f64 / 10f64.powi(self.nb_decs as i32)).unwrap()]);
 				}
 			}
 			self.num = 0;
@@ -370,6 +365,20 @@ impl<T> Polynomial<T> where T: Primitive
 		}
 		parser.pols_vec.pop().ok_or(EmptyStringInput)
 	}
+
+	/// Parses a string and returns a `Result` containing either a `Polynomial`
+	/// object or an error message.
+	///
+	/// # Arguments
+	///
+	/// * `s` - A `String` containing the string to be parsed.
+	///
+	/// # Returns
+	///
+	/// * `Ok(Self)` - A `Result` containing a `Polynomial` object if the parsing
+	///   was successful.
+	/// * `Err(String)` - A `Result` containing an error message if the parsing
+	///   failed.
 
 	pub fn parse_string(s: String) -> Result<Self, String>
 	{

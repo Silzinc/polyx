@@ -2,6 +2,7 @@ use crate::{consts::TOL, traits::HasNorm, Polynomial};
 use num_traits::{One, Zero};
 use std::{convert::From, default::Default, fmt::Debug, ops::Sub};
 
+/// Allows to create a polynomial from a list of coefficients.
 #[macro_export]
 macro_rules! polynomial {
   ($($x:expr),*) => (Polynomial::from(vec![$($x),*]));
@@ -86,8 +87,5 @@ impl<T> From<T> for Polynomial<T> where T: Zero + Clone + HasNorm
 impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone + HasNorm
 {
 	#[inline]
-	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self
-	{
-		Polynomial::from(Vec::from_iter(iter.into_iter()))
-	}
+	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self { Polynomial::from(Vec::from_iter(iter.into_iter())) }
 }

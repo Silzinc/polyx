@@ -45,9 +45,7 @@ impl<T> ComplexParser<T>
 		// println!("Got {:?} and {:?}", self.pols_vec, op);
 		let op: Ops = self.ops_vec.pop().ok_or(NoBinaryOperator)?;
 		let p1: Polynomial<Complex<T>> = self.pols_vec.pop().ok_or(BinaryOperatorZeroOperand(op))?;
-		let p2: Polynomial<Complex<T>> = self.pols_vec
-		                                     .pop()
-		                                     .ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
+		let p2: Polynomial<Complex<T>> = self.pols_vec.pop().ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
 		   && self.ops_vec.len() != 0
@@ -91,8 +89,7 @@ impl<T> ComplexParser<T>
 						let c: Complex<f64> = to_complexf64(p1[0].clone()).unwrap();
 						if p2.degree() == 0 {
 							let c2: Complex<f64> = to_complexf64(p2[0].clone()).unwrap();
-							self.pols_vec
-							    .push(polynomial![from_complexf64(c2.powc(c)).unwrap()])
+							self.pols_vec.push(polynomial![from_complexf64(c2.powc(c)).unwrap()])
 						} else if c.im.is_zero() && c.re == c.re.round() {
 							if c.re.is_sign_negative() {
 								return Err(ImpossiblePower(p2.to_string(), c.re.to_string()));
@@ -130,8 +127,7 @@ impl<T> ComplexParser<T>
 					_ => unreachable!(),
 				};
 				if self.is_min {
-					self.pols_vec
-					    .push(polynomial![Complex::<T>::zero() - complex_num]);
+					self.pols_vec.push(polynomial![Complex::<T>::zero() - complex_num]);
 				} else {
 					self.pols_vec.push(polynomial![complex_num]);
 				}
@@ -235,8 +231,7 @@ impl<T> ComplexParser<T>
 					// In that case we have an expression like -X, which should only be seen at the
 					// beginning of an expression
 					self.is_min = false;
-					self.pols_vec
-					    .push(polynomial![Complex::from(T::zero() - T::one())]);
+					self.pols_vec.push(polynomial![Complex::from(T::zero() - T::one())]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.pols_vec.push(X);
@@ -250,8 +245,7 @@ impl<T> ComplexParser<T>
 				if self.is_min {
 					// The idea is to turning any (...) into ((...)) and -(...) into (-1 * (...))
 					self.is_min = false;
-					self.pols_vec
-					    .push(polynomial![Complex::from(T::zero() - T::one())]);
+					self.pols_vec.push(polynomial![Complex::from(T::zero() - T::one())]);
 					self.push_bin_operator(Ops::Mul)?;
 				}
 				self.ops_vec.push(Ops::Open);
@@ -371,6 +365,7 @@ impl<T> Polynomial<Complex<T>> where T: Primitive
 		parser.pols_vec.pop().ok_or(EmptyStringInput)
 	}
 
+	/// Parses a string for polynomials with complex coefficients.
 	pub fn parse_string(s: String) -> Result<Self, String>
 	{
 		match Self::parse_string_checked(s) {

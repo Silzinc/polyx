@@ -1,6 +1,10 @@
-// #![feature(specialization)] // not stable yet
-#![feature(associated_type_bounds)]
+//! A library for working with polynomials. Apart from basic arithmetic
+//! operations, it also supports polynomial expression parsing and evaluation.
+//! Most of its functionalities are however non-optimal and are not recommended
+//! for use in production.
+
 #[derive(Debug, Clone, PartialEq)]
+/// A polynomial with coefficients of type `T`.
 pub struct Polynomial<T>(pub(crate) Vec<T>);
 
 mod ops;
