@@ -1,22 +1,24 @@
-use crate::traits::{FloatLike, SignedIntLike};
-use crate::Polynomial;
+use crate::{
+	traits::{FloatLike, SignedIntLike},
+	Polynomial,
+};
 use num_traits::Zero;
 
 impl<T> Polynomial<T> where T: SignedIntLike
 {
-	// Input : Two polynomials p1 and p2
-	// Output : gcd(p1, p2)
-
-	// This implementation is clearly not optimal as it uses Euclid's algorithm.
-	// It would be interesting to look at the more efficient Half-GCD algorithm.
-	// See https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf page 41
-	// However, I have not looked at it as of now.
-
-	// This algorithm is not reliable most of the time, because it happens often
-	// that the leading coefficient of p2 is not a divisor of every p1 and p2
-	// coefficients. That can happen even though p1 and p2 are not coprime in Z[X].
-	// Using gcd_float and rounding the resulting coefficients to integers through
-	// gcd_rounded is probably a better idea.
+	/// Input : Two polynomials p1 and p2
+	/// Output : gcd(p1, p2)
+	///
+	/// This implementation is clearly not optimal as it uses Euclid's algorithm.
+	/// It would be interesting to look at the more efficient Half-GCD algorithm.
+	/// See <https://thibautverron.github.io/enseignement/2018-CompAlg2-notes.pdf> page 41
+	/// However, I have not looked at it as of now.
+	///
+	/// This algorithm is not reliable most of the time, because it happens often
+	/// that the leading coefficient of `p2` is not a divisor of every `p1` and
+	/// `p2` coefficients. That can happen even though p1 and p2 are not coprime
+	/// in ℤ\[X\]. Using `gcd_float` and rounding the resulting coefficients to
+	/// integers through `gcd_rounded` is probably a better idea.
 	pub fn gcd(p1: &mut Self, p2: &mut Self) -> Self
 	{
 		let lc = p2[p2.degree()].clone();
@@ -29,9 +31,8 @@ impl<T> Polynomial<T> where T: SignedIntLike
 					p2[j] = p2[j].clone() * lc.clone();
 				}
 				panic!(
-				       "GCD ERROR : Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible \
-				        because their coefficients have integer types and p2's leading coefficient {lc:?} \
-				        is not a divisor of p2's degree-{i} coefficient {:?}.",
+				       "GCD ERROR: Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible because their coefficients have integer types and p2's \
+				        leading coefficient {lc:?} is not a divisor of p2's degree-{i} coefficient {:?}.",
 				       previous
 				)
 			}
@@ -48,9 +49,8 @@ impl<T> Polynomial<T> where T: SignedIntLike
 					p2[j] = p2[j].clone() * lc.clone();
 				}
 				panic!(
-				       "GCD ERROR : Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible \
-				        because their coefficients have integer types and p2's leading coefficient {lc:?} \
-				        is not a divisor of p1's degree-{i} coefficient {:?}.",
+				       "GCD ERROR: Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible because their coefficients have integer types and p2's \
+				        leading coefficient {lc:?} is not a divisor of p1's degree-{i} coefficient {:?}.",
 				       previous
 				)
 			}
@@ -78,17 +78,11 @@ impl<T> Polynomial<T> where T: SignedIntLike
 {
 	pub fn gcd_rounded(p1: &Self, p2: &Self) -> Self
 	{
-		let mut p1_float = p1.into_iter()
-		                     .map(|x| x.clone().to_f64().unwrap())
-		                     .collect::<Polynomial<f64>>();
-		let mut p2_float = p2.into_iter()
-		                     .map(|x| x.clone().to_f64().unwrap())
-		                     .collect::<Polynomial<f64>>();
+		let mut p1_float = p1.into_iter().map(|x| x.clone().to_f64().unwrap()).collect::<Polynomial<f64>>();
+		let mut p2_float = p2.into_iter().map(|x| x.clone().to_f64().unwrap()).collect::<Polynomial<f64>>();
 		let res_float = Polynomial::<f64>::gcd_float(&mut p1_float, &mut p2_float);
 		let lc_inv = res_float[res_float.degree()].recip();
-		res_float.into_iter()
-		         .map(|x| T::from((x * lc_inv).round()).unwrap())
-		         .collect::<Self>()
+		res_float.into_iter().map(|x| T::from((x * lc_inv).round()).unwrap()).collect::<Self>()
 	}
 }
 
@@ -114,16 +108,14 @@ impl<T> Polynomial<T> where T: FloatLike
 		}
 	}
 
-	pub fn gcd_float_immutable(p1: &Self, p2: &Self) -> Self
-	{
-		Self::gcd_float(&mut p1.clone(), &mut p2.clone())
-	}
+	pub fn gcd_float_immutable(p1: &Self, p2: &Self) -> Self { Self::gcd_float(&mut p1.clone(), &mut p2.clone()) }
 }
 
 impl<T> Polynomial<T> where T: SignedIntLike
 {
-	// Input : Two polynomials p1 and p2
-	// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2
+	/// Input : Two polynomials p1 and p2
+	/// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2
+	/// This would be far better done with Half-GCD.
 	pub fn cofactor_rounded(p1: &mut Self, p2: &mut Self) -> (Self, Self)
 	{
 		let mut gcd = Self::gcd_rounded(p1, p2);
@@ -132,16 +124,14 @@ impl<T> Polynomial<T> where T: SignedIntLike
 		(q1, q2)
 	}
 
-	pub fn cofactor_rounded_immutable(p1: &Self, p2: &Self) -> (Self, Self)
-	{
-		Self::cofactor_rounded(&mut p1.clone(), &mut p2.clone())
-	}
+	pub fn cofactor_rounded_immutable(p1: &Self, p2: &Self) -> (Self, Self) { Self::cofactor_rounded(&mut p1.clone(), &mut p2.clone()) }
 }
 
 impl<T> Polynomial<T> where T: FloatLike
 {
-	// Input : Two polynomials p1 and p2
-	// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2
+	/// Input : Two polynomials p1 and p2
+	/// Output : (q1, q2) coprime such that p1 / p2 = q1 / q2
+	/// This would be far better done with Half-GCD.
 	pub fn cofactor_float(p1: &mut Self, p2: &mut Self) -> (Self, Self)
 	{
 		let mut gcd = Self::gcd_float(p1, p2);
@@ -150,8 +140,5 @@ impl<T> Polynomial<T> where T: FloatLike
 		(q1, q2)
 	}
 
-	pub fn cofactor_float_immutable(p1: &Self, p2: &Self) -> (Self, Self)
-	{
-		Self::cofactor_float(&mut p1.clone(), &mut p2.clone())
-	}
+	pub fn cofactor_float_immutable(p1: &Self, p2: &Self) -> (Self, Self) { Self::cofactor_float(&mut p1.clone(), &mut p2.clone()) }
 }

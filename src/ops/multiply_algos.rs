@@ -58,19 +58,34 @@ use std::{
 // 	}
 // }
 
-impl<T> Polynomial<T>
-	where T: Mul<T, Output = T> + Clone + Zero + Debug + HasNorm /* Zero implicitly requires Add */
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Clone + Zero + Debug + HasNorm /* Zero implicitly requires Add */
 {
-	// Implements the naive convolution algorithm for polynomial (short)
-	// multiplication
-	// Time complexity: O(n^2)
-	// Space complexity: O(n)
-	/* Example:
-	let p1 = polynomial![1, 2, 3];
-	let p2 = polynomial![4, 5, 6];
-	let p3 = Polynomial::convolve(&p1, &p2, 5);
-	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
-	*/
+	/// Implements the naive convolution algorithm for polynomial (short)
+	/// multiplication
+	///
+	/// # Arguments
+	///
+	/// * `p1` - The first polynomial to multiply
+	/// * `p2` - The second polynomial to multiply
+	/// * `truncate` - The maximum degree of the resulting polynomial
+	///
+	/// # Example
+	///
+	/// ```
+	/// use polyx::*;
+	/// let p1 = polynomial![1, 2, 3];
+	/// let p2 = polynomial![4, 5, 6];
+	/// let p3 = Polynomial::convolve(&p1, &p2, 5);
+	/// assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
+	/// ```
+	///
+	/// # Time complexity
+	///
+	/// O(n^2)
+	///
+	/// # Space complexity
+	///
+	/// O(n)
 	#[inline]
 	pub fn convolve(p1: &Self, p2: &Self, truncate: usize) -> Self
 	{
@@ -90,19 +105,29 @@ impl<T> Polynomial<T>
 	}
 }
 
-impl<T> Polynomial<T>
-	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
-	// Implements the Karatsuba algorithm for polynomial (short) multiplication
-	// Based on this paper : https://members.loria.fr/EThome/files/kara.pdf
-	// Time complexity: O(n^1.585) (1.585 ~ log2(3))
-	// Space complexity: O(n)
-	/* Example:
-	let p1 = polynomial![1, 2, 3];
-	let p2 = polynomial![4, 5, 6];
-	let p3 = Polynomial::karatsuba(&p1, &p2, 5);
-	assert_eq!(p3, polynomial![4, 13, 28, 27, 18]);
-	*/
+	/// Implements the Karatsuba algorithm for polynomial (short) multiplication
+	/// Based on this paper: <https://members.loria.fr/EThome/files/kara.pdf>
+	///
+	/// # Time complexity
+	///
+	/// O(n^1.585) (1.585 ~ log2(3)) where n = max(p1.degree(), p2.degree())
+	///
+	/// # Space complexity
+	///
+	/// At most ~2n additional allocations done once at the beginning of the
+	/// algorithm
+	///
+	/// # Example
+	///
+	/// ```
+	/// use polyx::*;
+	/// let p1 = polynomial![1, 2, 3, 4, 5, 6, 7, 8];
+	/// let p2 = polynomial![4, 5, 6, 7, 8, 9, 10, 11];
+	/// let p3 = Polynomial::karatsuba(&p1, &p2, 12);
+	/// assert_eq!(p3, polynomial![4, 13, 28, 50, 80, 119, 168, 228, 252, 263, 260, 242]);
+	/// ```
 	#[inline]
 	pub fn karatsuba(p1: &Self, p2: &Self, truncate: usize) -> Self
 	{
@@ -126,27 +151,20 @@ impl<T> Polynomial<T>
 			(eff_p1, eff_p2)
 		};
 
-		let mut binding_result =
-			vec![T::zero(); fact_p1 + fact_p2 + p1_slice.len() + p2_slice.len() - 1];
+		let mut binding_result = vec![T::zero(); fact_p1 + fact_p2 + p1_slice.len() + p2_slice.len() - 1];
 		let result = binding_result.as_mut_slice();
 
 		let mut binding_buffer = vec![T::zero(); p1_slice.len() - 1 + (p1_slice.len() & 1)];
 		let buffer = binding_buffer.as_mut_slice();
 
 		// println!("Initial call");
-		Self::karatsuba_inplace(
-		                        p1_slice,
-		                        p2_slice,
-		                        &mut result[(fact_p1 + fact_p2)..],
-		                        buffer,
-		);
+		Self::karatsuba_inplace(p1_slice, p2_slice, &mut result[(fact_p1 + fact_p2)..], buffer);
 		binding_result.truncate(truncate);
 		Self::from(binding_result)
 	}
 
-	// The following function takes two polynomials p1 and p2 and puts their product
-	// mod X^truncate in result (which is assumed to be large enough to hold the
-	// result)
+	/// Takes two polynomials `p1` and `p2 and puts their product mod X^`truncate`
+	/// in `result` (which is assumed to be large enough to hold the result)
 	#[inline]
 	pub(crate) fn karatsuba_inplace(p1: &[T], p2: &[T], result: &mut [T], buffer: &mut [T])
 	{
@@ -189,12 +207,7 @@ impl<T> Polynomial<T>
 		let (lower_result, temp) = result.split_at_mut(q);
 		let (middle_result, upper_result) = temp.split_at_mut(q);
 		// println!("Step 3 call");
-		Self::karatsuba_inplace(
-		                        lower_result,
-		                        middle_result,
-		                        &mut buffer[0..((q << 1) - 1)],
-		                        upper_result,
-		);
+		Self::karatsuba_inplace(lower_result, middle_result, &mut buffer[0..((q << 1) - 1)], upper_result);
 
 		/* Step 4 */
 		let (_, upper_result) = temp.split_at_mut((p << 1) - q);
@@ -216,12 +229,7 @@ impl<T> Polynomial<T>
 
 		/* Step 8 */
 		// println!("Step 8 call");
-		Self::karatsuba_inplace(
-		                        &p1[0..p],
-		                        &p2[0..p],
-		                        &mut buffer[0..((p << 1) - 1)],
-		                        &mut result[0..p],
-		);
+		Self::karatsuba_inplace(&p1[0..p], &p2[0..p], &mut buffer[0..((p << 1) - 1)], &mut result[0..p]);
 
 		/* Step 9 */
 		result[0..p].clone_from_slice(&buffer[0..p]);

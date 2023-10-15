@@ -1,32 +1,23 @@
 use super::inner_macros::*;
 use crate::{traits::HasNorm, Polynomial};
-use num_traits::{One, Zero};
-use std::fmt::Debug;
-use std::ops::{Mul, MulAssign, Sub};
+use num_traits::{One, PrimInt, Zero};
+use std::{
+	fmt::Debug,
+	ops::{Mul, MulAssign, Sub},
+};
 
-impl<T> Mul<&Polynomial<T>> for &Polynomial<T>
-	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
+impl<T> Mul<&Polynomial<T>> for &Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	type Output = Polynomial<T>;
 
 	#[inline]
-	fn mul(self, other: &Polynomial<T>) -> Polynomial<T>
-	{
-		Polynomial::karatsuba(self, other, self.degree() + other.degree() + 1)
-	}
+	fn mul(self, other: &Polynomial<T>) -> Polynomial<T> { Polynomial::karatsuba(self, other, self.degree() + other.degree() + 1) }
 }
 
 impl_op_all!(Mul, MulAssign, mul, mul_assign, Sub);
 
-impl<T> Polynomial<T>
-	where T:
-		      Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + Debug + HasNorm
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + One + PartialEq + Debug + HasNorm
 {
-	// Implements fast integer exponentiation
-	/* Example:
-	let p = polynomial![1, 0, 2];
-	assert_eq!(p.powi(3), polynomial![1, 0, 6, 0, 4]);
-	*/
 	#[inline]
 	fn powi_aux(p: &Polynomial<T>, n: usize, r: Polynomial<T>) -> Polynomial<T>
 	{
@@ -40,10 +31,20 @@ impl<T> Polynomial<T>
 		}
 	}
 
+	/// Computes the integer power of a polynomial.
+	///
+	/// # Examples
+	///
+	/// ```rust
+	/// use polyx::*;
+	///
+	/// let p = polynomial![1, 0, 2];
+	/// assert_eq!(p.powi(3), polynomial![1, 0, 6, 0, 12, 0, 8]);
+	/// ```
 	#[inline]
-	pub fn powi<U: Into<usize>>(&self, exp: U) -> Polynomial<T>
+	pub fn powi<U: PrimInt + Debug>(&self, exp: U) -> Polynomial<T>
 	{
-		let n: usize = exp.into();
+		let n: usize = exp.to_usize().expect(&format!("Could not convert exponent {exp:?} to usize"));
 		if self.is_zero() {
 			return Self::zero();
 		}
@@ -56,13 +57,9 @@ impl<T> Polynomial<T>
 	}
 }
 
-impl<T> Polynomial<T>
-	where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
+impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
+	/// Returns `p1` * `p2` modulo `modulus`
 	#[inline]
-	// Returns p1 * p2 modulo modulus
-	pub fn short_product(p1: &Self, p2: &Self, modulus: usize) -> Self
-	{
-		Self::karatsuba(p1, p2, modulus)
-	}
+	pub fn short_product(p1: &Self, p2: &Self, modulus: usize) -> Self { Self::karatsuba(p1, p2, modulus) }
 }

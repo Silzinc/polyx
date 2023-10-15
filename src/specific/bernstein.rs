@@ -22,6 +22,8 @@ fn binom<T: PrimInt, U1: PrimInt, U2: PrimInt>(_n: U1, _k: U2) -> T
 
 impl<T> Polynomial<T> where T: Debug + PrimInt + HasNorm
 {
+	/// Computes the Bernstein polynomial of degree `m` and index `i` for a given
+	/// (unsigned) integer type `U`.
 	pub fn bernstein<U: PrimInt>(_m: U, _i: U) -> Self
 	{
 		let m: usize = _m.to_usize().unwrap();
