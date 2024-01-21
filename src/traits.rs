@@ -33,8 +33,15 @@ pub trait PolyxNum:
 /// (typically non-complex numbers).
 pub trait Primitive: PolyxNum + ToPrimitive + FromPrimitive + PartialOrd {}
 
+impl HasNorm for f64
+{
+	#[inline]
+	fn norm(&self) -> f64 { self.abs() }
+}
+impl Primitive for f64 {}
+
 duplicate::duplicate! {
-	[primitive_type; [f64]; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
+	[primitive_type; [f32]; [i8]; [i16]; [i32]; [i64]; [isize]; [i128]; [u8]; [u16]; [u32]; [u64]; [usize]; [u128]]
 	impl HasNorm for primitive_type {
 		#[inline]
 		fn norm(&self) -> f64 { (*self as f64).abs() }

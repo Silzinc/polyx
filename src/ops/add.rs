@@ -1,14 +1,14 @@
 use super::inner_macros::*;
-use crate::traits::HasNorm;
-use crate::Polynomial;
+use crate::{traits::HasNorm, Polynomial};
 use num_traits::Zero;
-use std::fmt::Debug;
-use std::ops::{Add, AddAssign, Neg, Sub, SubAssign};
+use std::{
+	fmt::Debug,
+	ops::{Add, AddAssign, Neg, Sub, SubAssign},
+};
 
 //=================================================================================================
 
-impl<T> Add<&Polynomial<T>> for &Polynomial<T>
-	where T: Add<T, Output = T> + Clone + Zero + Debug + HasNorm
+impl<T> Add<&Polynomial<T>> for &Polynomial<T> where T: Add<T, Output = T> + Clone + Zero + Debug + HasNorm
 {
 	// Implements addition without taking ownership
 	/* Example:
@@ -22,10 +22,10 @@ impl<T> Add<&Polynomial<T>> for &Polynomial<T>
 	fn add(self, other: &Polynomial<T>) -> Polynomial<T>
 		where T: Zero
 	{
-		if other.0.len() == 0 {
+		if other.0.is_empty() {
 			return self.clone();
 		}
-		if self.0.len() == 0 {
+		if self.0.is_empty() {
 			return other.clone();
 		}
 		if other.degree() > self.degree() {
@@ -54,10 +54,7 @@ impl<T> Neg for &Polynomial<T> where T: Neg<Output = T> + Clone + Zero + HasNorm
 	*/
 	type Output = Polynomial<T>;
 
-	fn neg(self) -> Polynomial<T>
-	{
-		Polynomial::from(self.0.iter().map(|x| -x.clone()).collect::<Vec<T>>())
-	}
+	fn neg(self) -> Polynomial<T> { Polynomial::from(self.0.iter().map(|x| -x.clone()).collect::<Vec<T>>()) }
 }
 impl<T> Neg for Polynomial<T> where T: Neg<Output = T> + Clone + Zero + HasNorm
 {
@@ -84,10 +81,10 @@ impl<T> Sub<&Polynomial<T>> for &Polynomial<T> where T: Sub<Output = T> + Clone 
 	#[inline]
 	fn sub(self, other: &Polynomial<T>) -> Polynomial<T>
 	{
-		if other.0.len() == 0 {
+		if other.0.is_empty() {
 			return self.clone();
 		}
-		if other.degree() > self.degree() || self.0.len() == 0 {
+		if other.degree() > self.degree() || self.0.is_empty() {
 			let mut minus_result = other.sub(self);
 			for k in 0..minus_result.0.len() {
 				minus_result[k] = T::zero() - minus_result[k].clone();

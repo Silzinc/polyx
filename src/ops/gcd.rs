@@ -21,14 +21,14 @@ impl<T> Polynomial<T> where T: SignedIntLike
 	/// integers through `gcd_rounded` is probably a better idea.
 	pub fn gcd(p1: &mut Self, p2: &mut Self) -> Self
 	{
-		let lc = p2[p2.degree()].clone();
+		let lc = p2[p2.degree()];
 		for i in 0..=p2.degree() {
-			let previous = p2[i].clone();
-			p2[i] = p2[i].clone() / lc.clone();
-			if p2[i].clone() * lc.clone() != previous {
-				p2[i] = previous.clone();
+			let previous = p2[i];
+			p2[i] = p2[i] / lc;
+			if p2[i] * lc != previous {
+				p2[i] = previous;
 				for j in 0..i {
-					p2[j] = p2[j].clone() * lc.clone();
+					p2[j] = p2[j] * lc;
 				}
 				panic!(
 				       "GCD ERROR: Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible because their coefficients have integer types and p2's \
@@ -38,15 +38,15 @@ impl<T> Polynomial<T> where T: SignedIntLike
 			}
 		}
 		for i in 0..=p1.degree() {
-			let previous = p1[i].clone();
-			p1[i] = p1[i].clone() / lc.clone();
-			if p1[i].clone() * lc.clone() != previous {
-				p1[i] = previous.clone();
+			let previous = p1[i];
+			p1[i] = p1[i] / lc;
+			if p1[i] * lc != previous {
+				p1[i] = previous;
 				for j in 0..i {
-					p1[j] = p1[j].clone() * lc.clone();
+					p1[j] = p1[j] * lc;
 				}
 				for j in 0..=p2.degree() {
-					p2[j] = p2[j].clone() * lc.clone();
+					p2[j] = p2[j] * lc;
 				}
 				panic!(
 				       "GCD ERROR: Computing the gcd of\np1 = {p1:?}\nand\np2={p2:?}\nis impossible because their coefficients have integer types and p2's \
@@ -63,10 +63,10 @@ impl<T> Polynomial<T> where T: SignedIntLike
 			Self::gcd(p2, &mut r)
 		};
 		for i in 0..p2.degree() {
-			p2[i] = p2[i].clone() * lc.clone();
+			p2[i] = p2[i] * lc;
 		}
 		for i in 0..p1.degree() {
-			p1[i] = p1[i].clone() * lc.clone();
+			p1[i] = p1[i] * lc;
 		}
 		res
 	}

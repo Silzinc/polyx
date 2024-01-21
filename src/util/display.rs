@@ -181,7 +181,7 @@ impl<T> fmt::Display for Polynomial<T> where T: Primitive
 		}
 		let degree = self.degree();
 		if degree == 0 {
-			return write!(f, "{}", format!("Polynomial(0)\n {:10.3e}", self[0].to_f64().unwrap()));
+			return write!(f, "{}", format_args!("Polynomial(0)\n {:10.3e}", self[0].to_f64().unwrap()));
 		}
 
 		let mut result_str_vec = Vec::with_capacity(degree + 2);
@@ -227,7 +227,7 @@ impl<T> fmt::Display for Polynomial<Complex<T>> where T: Primitive
 			return write!(
 			              f,
 			              "{}",
-			              format!("Polynomial(0)\n {:10.3e}", to_complexf64(self[0].clone()).unwrap())
+			              format_args!("Polynomial(0)\n {:10.3e}", to_complexf64(self[0].clone()).unwrap())
 			);
 		}
 

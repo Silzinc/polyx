@@ -33,10 +33,10 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 		let mut v = Self::from(u[0].clone());
 		let mut result_modulus = 1;
 		while result_modulus < modulus {
-			v = Self::short_product(&v, &(&two - Self::short_product(&u, &v, modulus)), modulus);
+			v = Self::short_product(&v, &(&two - Self::short_product(u, &v, modulus)), modulus);
 			result_modulus <<= 1;
 		}
-		Polynomial::from(v)
+		v
 	}
 }
 
@@ -50,10 +50,10 @@ impl<T> Polynomial<T> where T: FloatLike + HasNorm
 		let mut v = Self::from(u[0].clone().inv());
 		let mut result_modulus = 1;
 		while result_modulus < modulus {
-			v = Self::short_product(&v, &(&two - Self::short_product(&u, &v, modulus)), modulus);
+			v = Self::short_product(&v, &(&two - Self::short_product(u, &v, modulus)), modulus);
 			result_modulus <<= 1;
 		}
-		Polynomial::from(v)
+		v
 	}
 }
 
@@ -99,8 +99,8 @@ impl<T> Polynomial<T> where T: Clone + Debug + Signed + HasNorm
 		let n = p2.degree();
 		p1.rev_inplace();
 		p2.rev_inplace();
-		let h = Self::inverse(&p2, m - n + 1);
-		let mut q = Self::short_product(&p1, &h, m - n + 1);
+		let h = Self::inverse(p2, m - n + 1);
+		let mut q = Self::short_product(p1, &h, m - n + 1);
 		p1.rev_inplace();
 		p2.rev_inplace();
 		q.rev_inplace();
@@ -162,8 +162,8 @@ impl<T> Polynomial<T> where T: FloatLike
 		let n = p2.degree();
 		p1.rev_inplace();
 		p2.rev_inplace();
-		let h = Self::inverse_float(&p2, m - n + 1);
-		let mut q = Self::short_product(&p1, &h, m - n + 1);
+		let h = Self::inverse_float(p2, m - n + 1);
+		let mut q = Self::short_product(p1, &h, m - n + 1);
 		p1.rev_inplace();
 		p2.rev_inplace();
 		q.rev_inplace();

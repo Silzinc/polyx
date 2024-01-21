@@ -44,7 +44,7 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 	#[inline]
 	pub fn powi<U: PrimInt + Debug>(&self, exp: U) -> Polynomial<T>
 	{
-		let n: usize = exp.to_usize().expect(&format!("Could not convert exponent {exp:?} to usize"));
+		let n: usize = exp.to_usize().unwrap_or_else(|| panic!("Could not convert exponent {exp:?} to usize"));
 		if self.is_zero() {
 			return Self::zero();
 		}

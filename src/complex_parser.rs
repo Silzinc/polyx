@@ -48,9 +48,9 @@ impl<T> ComplexParser<T>
 		let p2: Polynomial<Complex<T>> = self.pols_vec.pop().ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
-		   && self.ops_vec.len() != 0
+		   && !self.ops_vec.is_empty()
 		   && self.ops_vec[self.ops_vec.len() - 1] == Ops::Pow
-		   && self.pols_vec.len() != 0
+		   && !self.pols_vec.is_empty()
 		   && self.pols_vec[self.pols_vec.len() - 1].degree() == 0
 		   && p1.degree() == 0
 		   && p2 == X
@@ -148,11 +148,9 @@ impl<T> ComplexParser<T>
 		if self.is_min {
 			Err(UnaryMinusFailed(op))
 		} else {
-			if self.ops_vec.len() != 0 {
-				let p = op.prio();
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1].prio() >= p {
-					self.execute_bin_operator()?;
-				}
+			let p = op.prio();
+			while !self.ops_vec.is_empty() && self.ops_vec[self.ops_vec.len() - 1].prio() >= p {
+				self.execute_bin_operator()?;
 			}
 			self.ops_vec.push(op);
 			Ok(())
@@ -254,18 +252,14 @@ impl<T> ComplexParser<T>
 			},
 			')' => {
 				self.push_num()?;
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
-					self.execute_bin_operator()?;
-				}
-				if self.ops_vec.len() == 0 || self.ops_vec.pop() != Some(Ops::Open) {
-					return Err(ImpossibleClose);
-				}
 				// Doing it a second time because there always are two layers of parenthesis
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
-					self.execute_bin_operator()?;
-				}
-				if self.ops_vec.len() == 0 || self.ops_vec.pop() != Some(Ops::Open) {
-					return Err(ImpossibleClose);
+				for _ in 0..2 {
+					while !self.ops_vec.is_empty() && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
+						self.execute_bin_operator()?;
+					}
+					if self.ops_vec.is_empty() || self.ops_vec.pop() != Some(Ops::Open) {
+						return Err(ImpossibleClose);
+					}
 				}
 				self.is_min = false;
 				self.is_factor = true;
@@ -359,7 +353,7 @@ impl<T> Polynomial<Complex<T>> where T: Primitive
 			parser.read_char(c)?;
 		}
 		parser.push_num()?;
-		while parser.ops_vec.len() != 0 {
+		while !parser.ops_vec.is_empty() {
 			parser.execute_bin_operator()?;
 		}
 		parser.pols_vec.pop().ok_or(EmptyStringInput)

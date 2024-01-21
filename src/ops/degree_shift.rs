@@ -9,10 +9,11 @@ use std::ops::{Shl, ShlAssign, Shr, ShrAssign};
 /// ```
 /// use polyx::Polynomial;
 ///
-/// let p = Polynomial(vec![1, 2, 3]);
+/// let p = Polynomial::from(vec![1, 2, 3]);
 /// let q = &p << 2;
-/// assert_eq!(q, Polynomial(vec![0, 0, 1, 2, 3]));
+/// assert_eq!(q, Polynomial::from(vec![0, 0, 1, 2, 3]));
 /// ```
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<T, I> Shl<I> for &Polynomial<T>
 	where T: Clone + Zero,
 	      I: PrimInt
@@ -69,8 +70,8 @@ impl<T, I> ShlAssign<I> for Polynomial<T>
 /// ```
 /// use polyx::Polynomial;
 ///
-/// let p = Polynomial(vec![1, 2, 3]);
-/// assert_eq!(p >> 1, Polynomial(vec![2, 3]));
+/// let p = Polynomial::from(vec![1, 2, 3]);
+/// assert_eq!(p >> 1, Polynomial::from(vec![2, 3]));
 /// ```
 impl<T, I> Shr<I> for &Polynomial<T>
 	where T: Clone,

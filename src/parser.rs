@@ -24,12 +24,12 @@ impl fmt::Display for Ops
 	{
 		use Ops::*;
 		match self {
-			Add => write!(f, "{}", "'+'"),
-			Min => write!(f, "{}", "'-'"),
-			Mul => write!(f, "{}", "'*'"),
-			Div => write!(f, "{}", "'/'"),
-			Pow => write!(f, "{}", "'^'"),
-			Open => write!(f, "{}", "'('"),
+			Add => write!(f, "'+'"),
+			Min => write!(f, "'-'"),
+			Mul => write!(f, "'*'"),
+			Div => write!(f, "'/'"),
+			Pow => write!(f, "'^'"),
+			Open => write!(f, "'('"),
 		}
 	}
 }
@@ -74,9 +74,9 @@ impl<T> Parser<T> where T: Primitive
 		let p2: Polynomial<T> = self.pols_vec.pop().ok_or(BinaryOperatorOneOperand(op, p1.to_string()))?;
 
 		if op == Ops::Mul
-		   && self.ops_vec.len() != 0
+		   && !self.ops_vec.is_empty()
 		   && self.ops_vec[self.ops_vec.len() - 1] == Ops::Pow
-		   && self.pols_vec.len() != 0
+		   && !self.pols_vec.is_empty()
 		   && self.pols_vec[self.pols_vec.len() - 1].degree() == 0
 		   && p1.degree() == 0
 		   && p2 == X
@@ -139,14 +139,12 @@ impl<T> Parser<T> where T: Primitive
 			}
 			if self.num == 0 {
 				self.pols_vec.push(Polynomial::zero());
+			} else if self.is_min {
+				self.pols_vec
+				    .push(polynomial![T::from_f64(-(self.num as f64) / 10f64.powi(self.nb_decs as i32)).unwrap()]);
 			} else {
-				if self.is_min {
-					self.pols_vec
-					    .push(polynomial![T::from_f64(-(self.num as f64) / 10f64.powi(self.nb_decs as i32)).unwrap()]);
-				} else {
-					self.pols_vec
-					    .push(polynomial![T::from_f64(self.num as f64 / 10f64.powi(self.nb_decs as i32)).unwrap()]);
-				}
+				self.pols_vec
+				    .push(polynomial![T::from_f64(self.num as f64 / 10f64.powi(self.nb_decs as i32)).unwrap()]);
 			}
 			self.num = 0;
 			self.nb_decs = 0;
@@ -163,11 +161,9 @@ impl<T> Parser<T> where T: Primitive
 		if self.is_min {
 			Err(UnaryMinusFailed(op))
 		} else {
-			if self.ops_vec.len() != 0 {
-				let p = op.prio();
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1].prio() >= p {
-					self.execute_bin_operator()?;
-				}
+			let p = op.prio();
+			while !self.ops_vec.is_empty() && self.ops_vec[self.ops_vec.len() - 1].prio() >= p {
+				self.execute_bin_operator()?;
 			}
 			self.ops_vec.push(op);
 			Ok(())
@@ -259,18 +255,14 @@ impl<T> Parser<T> where T: Primitive
 			},
 			')' => {
 				self.push_num()?;
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
-					self.execute_bin_operator()?;
-				}
-				if self.ops_vec.len() == 0 || self.ops_vec.pop() != Some(Ops::Open) {
-					return Err(ImpossibleClose);
-				}
-				// Doing it a second time because there always are two layers of parenthesis
-				while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
-					self.execute_bin_operator()?;
-				}
-				if self.ops_vec.len() == 0 || self.ops_vec.pop() != Some(Ops::Open) {
-					return Err(ImpossibleClose);
+				// Doing it twice because there always are two layers of parenthesis
+				for _ in 0..2 {
+					while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
+						self.execute_bin_operator()?;
+					}
+					if self.ops_vec.is_empty() || self.ops_vec.pop() != Some(Ops::Open) {
+						return Err(ImpossibleClose);
+					}
 				}
 				self.is_min = false;
 				self.is_factor = true;
@@ -360,7 +352,7 @@ impl<T> Polynomial<T> where T: Primitive
 			parser.read_char(c)?;
 		}
 		parser.push_num()?;
-		while parser.ops_vec.len() != 0 {
+		while !parser.ops_vec.is_empty() {
 			parser.execute_bin_operator()?;
 		}
 		parser.pols_vec.pop().ok_or(EmptyStringInput)

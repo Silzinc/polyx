@@ -34,7 +34,7 @@ impl<T> Polynomial<T> where T: Debug + PrimInt + HasNorm
 			let b = T::from(binom::<usize, _, _>(m, i)).unwrap();
 			crate::polynomial![T::one(), T::zero() - T::one()].powi(m - i)
 			                                                  .into_iter()
-			                                                  .map(|x| x * b.clone())
+			                                                  .map(|x| x * b)
 			                                                  .collect::<Polynomial<T>>()
 			* crate::polynomial![T::zero(), T::one()].powi(i)
 		}

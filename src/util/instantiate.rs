@@ -87,5 +87,5 @@ impl<T> From<T> for Polynomial<T> where T: Zero + Clone + HasNorm
 impl<T> FromIterator<T> for Polynomial<T> where T: Zero + Clone + HasNorm
 {
 	#[inline]
-	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self { Polynomial::from(Vec::from_iter(iter.into_iter())) }
+	fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self { Polynomial::from(Vec::from_iter(iter)) }
 }

@@ -2,7 +2,7 @@ use crate::{traits::HasNorm, Polynomial};
 use num_traits::Zero;
 // use rustfft::{num_complex::Complex, FftNum, FftPlanner};
 use std::{
-	cmp::{max, min},
+	cmp::{max, min, Ordering},
 	fmt::Debug,
 	ops::{Mul, Sub},
 };
@@ -141,14 +141,17 @@ impl<T> Polynomial<T> where T: Mul<T, Output = T> + Sub<T, Output = T> + Clone +
 		let eff_p1 = &p1.0[fact_p1..min(truncate, p1.degree() + 1)];
 
 		let mut binding = vec![T::zero(); max(eff_p1.len(), eff_p2.len())];
-		let (p1_slice, p2_slice) = if eff_p1.len() > eff_p2.len() {
-			binding[0..eff_p2.len()].clone_from_slice(&eff_p2);
-			(eff_p1, binding.as_slice())
-		} else if eff_p1.len() < eff_p2.len() {
-			binding[0..eff_p1.len()].clone_from_slice(&eff_p1);
-			(binding.as_slice(), eff_p2)
-		} else {
-			(eff_p1, eff_p2)
+
+		let (p1_slice, p2_slice) = match eff_p1.len().cmp(&eff_p2.len()) {
+			Ordering::Less => {
+				binding[0..eff_p1.len()].clone_from_slice(eff_p1);
+				(binding.as_slice(), eff_p2)
+			},
+			Ordering::Greater => {
+				binding[0..eff_p2.len()].clone_from_slice(eff_p2);
+				(eff_p1, binding.as_slice())
+			},
+			Ordering::Equal => (eff_p1, eff_p2),
 		};
 
 		let mut binding_result = vec![T::zero(); fact_p1 + fact_p2 + p1_slice.len() + p2_slice.len() - 1];
