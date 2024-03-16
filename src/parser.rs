@@ -279,7 +279,7 @@ where
         self.push_num()?;
         // Doing it twice because there always are two layers of parenthesis
         for _ in 0..2 {
-          while self.ops_vec.len() != 0 && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
+          while !self.ops_vec.is_empty() && self.ops_vec[self.ops_vec.len() - 1] != Ops::Open {
             self.execute_bin_operator()?;
           }
           if self.ops_vec.is_empty() || self.ops_vec.pop() != Some(Ops::Open) {
