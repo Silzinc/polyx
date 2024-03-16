@@ -1,6 +1,9 @@
 use num::Complex;
 
-use crate::*;
+use crate::{
+  traits::ToLaTeX,
+  *,
+};
 
 #[test]
 fn test_instantiate()

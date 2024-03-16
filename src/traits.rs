@@ -93,3 +93,8 @@ impl FloatLike for Complex<f64> {}
 /// A trait for types that behave like signed integers, including having a norm.
 pub trait SignedIntLike: Clone + Debug + PrimInt + Signed + HasNorm {}
 impl<T> SignedIntLike for T where T: Clone + Debug + PrimInt + Signed + HasNorm {}
+
+pub trait ToLaTeX
+{
+  fn to_latex(&self) -> String;
+}

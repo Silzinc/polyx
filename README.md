@@ -81,6 +81,8 @@ assert_eq!(&p >> 2, polynomial![2]);
 #### $\LaTeX$ parsing
 
 ```rust
+use polyx::traits::ToLaTeX
+
 let p = polynomial![1, 2, -5, -3];
 println!("{}", p.to_latex());
 
