@@ -10,14 +10,14 @@ Many other superb crates already exist: [`polynomial`](https://docs.rs/polynomia
 
 * A vector based `Polynomial` struct and a `polynomial` macro to instantiate one.
 * Multiplication with a memory efficient Karatsuba algorithm, addition, subtraction. These operations can be used both on a bare `Polynomial` and on a reference `&Polynomial` to preserve its ownership.
-* Euclidean division and modulo, but these are not implemented through the `/` and `%` operators as it requires different functions if the polynomial contains integers or floats as coefficients. The crate rather provides `euclidean_division` and `euclidean_division_float` functions. These take mutable inputs for better performance, but these functions `euclidean_division_immutable(_float)` are also provided.
+* Euclidean division and modulo. No implemention for operators `/` and `%` are provided, though. Different algorithms are used if the polynomial contains integers or floats as coefficients. Therefore, the crate rather provides `euclidean_division` and `euclidean_division_float` functions. These take mutable inputs for better performance, but the slower functions `euclidean_division_immutable[_float]` are also provided.
 * Parsing polynomials from strings with the `parse_string` function.
-* Inverting a polynomial modulo $X^n$ with the `inverse(_float)` functions.
+* Inverting a polynomial modulo $X^n$ with the `inverse[_float]` functions.
 * Polynomial short product with the `short_product` function.
 * Degree left and right shift with `<<` and `>>` operators. `p >> n` returns the quotient of $p\div X^n$ and `p << n` returns $X^n p$.
-* Parsing into $\LaTeX$ strings with `to_latex_string` and `to_latex_string_complex` functions, to be used accordingly to the coefficients being complex or not.
+* Parsing into $\LaTeX$ strings with `to_latex` function in the `ToLaTeX` trait.
 
-The crate considers flaoting point coefficients as zero if their value goes below a `TOL` constant, which is fixed at $2^{-31}$. There also is a `gcd` function, but it uses the basic Euclid algorithm rather than the much faster half-gcd algorithm.
+The crate considers floating point coefficients as zero if their value goes below a `TOL` constant, which is fixed at $2^{-31}$. There also is a `gcd` function, but it uses the basic Euclid algorithm rather than the much faster half-gcd algorithm.
 
 ### Examples
 
@@ -54,11 +54,13 @@ assert_eq!(&p1 * &p2, polynomial![0, 0, 0, 0, 0, 1, 1]);
 let a = polynomial![1, 0, 2];
 let b = polynomial![1, 1];
 let (q, r) = Polynomial::euclidean_division_immutable(&a, &b);
+assert!(r.degree() < a.degree());
 assert_eq!(b * q + r, a);
 
 let mut a = polynomial![1, 0, 2];
 let mut b = polynomial![1, 1];
 let (q, r) = Polynomial::euclidean_division(&mut a, &mut b);
+assert!(r.degree() < a.degree());
 assert_eq!(b * q + r, a);
 ```
 
